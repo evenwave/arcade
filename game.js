@@ -4,13 +4,10 @@ const action = document.querySelector('#action');
 const status = document.querySelector('#status');
 const scoreLabel = document.querySelector('#score');
 const perfectLabel = document.querySelector('#perfect');
-const scoreRows = document.querySelector('#scores');
-const storageKey = 'stack-shift-scores';
 const blockHeight = 30;
 const baseY = board.height - 32;
 const palette = ['#b7f477', '#79e3c4', '#6dcaf1', '#aab5ff', '#f4a6d8', '#ffce79'];
 
-let highScores = loadScores();
 let phase = 'ready';
 let stack = [baseBlock()];
 let moving;
@@ -19,42 +16,6 @@ let lastFrame;
 
 function baseBlock() {
   return { x: 160, width: 160, color: '#677d98' };
-}
-
-function rankScores(scores) {
-  return scores.sort((a, b) => b.blocks - a.blocks || b.perfect - a.perfect).slice(0, 5);
-}
-
-function loadScores() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey));
-    if (Array.isArray(saved)) {
-      return rankScores(saved.filter(run =>
-        run && Number.isSafeInteger(run.blocks) && run.blocks > 0 &&
-        Number.isSafeInteger(run.perfect) && run.perfect >= 0 && run.perfect <= run.blocks
-      ));
-    }
-  } catch {
-    // The game works when browser storage is unavailable.
-  }
-  return [];
-}
-
-function showScores() {
-  scoreRows.replaceChildren();
-  if (!highScores.length) {
-    const row = scoreRows.insertRow();
-    const cell = row.insertCell();
-    cell.colSpan = 3;
-    cell.textContent = 'No scores yet';
-    return;
-  }
-  highScores.forEach((run, index) => {
-    const row = scoreRows.insertRow();
-    for (const value of [index + 1, run.blocks, run.perfect]) {
-      row.insertCell().textContent = value;
-    }
-  });
 }
 
 function spawnBlock() {
@@ -85,15 +46,7 @@ function finish() {
   phase = 'ended';
   moving = undefined;
   const blocks = stack.length - 1;
-  if (blocks > 0) {
-    highScores = rankScores([...highScores, { blocks, perfect: perfectDrops }]);
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(highScores));
-    } catch {
-      // Keep scores available for this session.
-    }
-    showScores();
-  }
+  if (blocks > 0) saveScore({ blocks, perfect: perfectDrops });
   action.textContent = 'Play again';
   status.textContent = 'Run over. ' + blocks + ' stacked, ' + perfectDrops + ' perfect.';
   draw();
@@ -181,6 +134,5 @@ document.addEventListener('keydown', event => {
 });
 document.addEventListener('visibilitychange', () => { lastFrame = undefined; });
 
-showScores();
 draw();
 requestAnimationFrame(animate);

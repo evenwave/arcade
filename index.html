@@ -7,31 +7,23 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main>
+  <main class="game-page">
     <header>
       <h1>Stack Shift</h1>
       <p>Press Space or tap the board to stack a sliding block. Overhangs get trimmed.</p>
     </header>
-    <div class="layout">
-      <section class="panel" aria-label="Stack Shift game">
-        <dl class="stats">
-          <div><dt>Blocks</dt><dd id="score">0</dd></div>
-          <div><dt>Perfect drops</dt><dd id="perfect">0</dd></div>
-        </dl>
-        <canvas id="board" width="480" height="400" aria-label="Stack Shift playfield"></canvas>
-        <button id="action" type="button">Start</button>
-        <p id="status" role="status">Ready to stack.</p>
-      </section>
-      <aside class="panel">
-        <h2>Local high scores</h2>
-        <p>Top five runs in this browser. Perfect drops break ties.</p>
-        <table>
-          <thead><tr><th scope="col">Rank</th><th scope="col">Blocks</th><th scope="col">Perfect</th></tr></thead>
-          <tbody id="scores"></tbody>
-        </table>
-      </aside>
-    </div>
+    <nav aria-label="Stack Shift pages"><a class="page-link" href="leaderboard.html">Leaderboard</a></nav>
+    <section class="panel" aria-label="Stack Shift game">
+      <dl class="stats">
+        <div><dt>Blocks</dt><dd id="score">0</dd></div>
+        <div><dt>Perfect drops</dt><dd id="perfect">0</dd></div>
+      </dl>
+      <canvas id="board" width="480" height="400" aria-label="Stack Shift playfield"></canvas>
+      <button id="action" type="button">Start</button>
+      <p id="status" role="status">Ready to stack.</p>
+    </section>
   </main>
+  <script src="scores.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
