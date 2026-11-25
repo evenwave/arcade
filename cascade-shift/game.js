@@ -5,7 +5,7 @@ const CONFIG = {
   "boardSize": 8,
   "blockTypes": 5,
   "startingBlocks": 20,
-  "incomingBlocks": 3,
+  "incomingBlocks": 2,
   "minimumMatch": 3,
   "pointsPerBlock": 100,
   "slideMs": 170,
