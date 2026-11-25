@@ -6,6 +6,7 @@ const CONFIG = {
   "blockTypes": 5,
   "startingBlocks": 20,
   "incomingBlocks": 2,
+  "noMatchIncomingBlocks": 3,
   "minimumMatch": 3,
   "pointsPerBlock": 100,
   "slideMs": 170,
@@ -197,10 +198,13 @@ async function resolveMatches(dir,turn){
     ids=matches(board);
   }
 }
-function introduce(dir){
+function incomingCount(clearedBeforeSpawn){
+  return clearedBeforeSpawn > 0 ? CONFIG.incomingBlocks : CONFIG.noMatchIncomingBlocks;
+}
+function introduce(dir,count){
   // Alternate odd/even lanes each valid turn. Randomly sample available
   // lanes within the active pattern; never overwrite an occupied cell.
-  const slots=shuffled(entryCandidates(board,dir,parity)).slice(0,CONFIG.incomingBlocks);
+  const slots=shuffled(entryCandidates(board,dir,parity)).slice(0,count);
   for(const [r,c] of slots)board[r][c]=newTile();
   parity=1-parity;
   return slots.length;
@@ -227,12 +231,15 @@ async function move(dir){
     $("gravity").textContent=ARROWS[dir]+" Shift "+dir;
     board=next;render(false);await wait(CONFIG.slideMs);
     await resolveMatches(dir,turn);
-    const added=introduce(dir);render();await wait(CONFIG.spawnMs);
+    // Only matches caused by the shift itself earn the lower spawn cost.
+    // Matches triggered by incoming tiles still clear and cascade for free.
+    const spawnCount=incomingCount(turn.cleared);
+    const added=introduce(dir,spawnCount);render();await wait(CONFIG.spawnMs);
     // Incoming tiles stay at the edge unless they make a match.
     await resolveMatches(dir,turn);
     setStatus(turn.cleared
       ? "+"+format(turn.points)+" points · "+turn.cleared+" cleared · "+added+" added"+(turn.wave>1?" · ×"+turn.wave+" combo":"")
-      : added+" blocks added · No match. Plan your next shift.");
+      : added+" blocks added · No match (3-block penalty). Plan your next shift.");
     if(!DIRECTIONS.some(d=>canMove(board,d)))finish();
   }finally{setBusy(false);}
 }
