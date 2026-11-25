@@ -11,7 +11,7 @@ body { margin: 0; min-height: 100vh; background: radial-gradient(ellipse at 50% 
 .hero { text-align: center; margin-bottom: 48px; }
 .eyebrow, .genre { font-size: .72rem; font-weight: 700; letter-spacing: .13em; }
 .eyebrow { color: #a9b8d8; margin: 0 0 12px; }
-h1 { font-size: clamp(3.6rem, 11vw, 7rem); letter-spacing: -.085em; line-height: .95; margin: 0; }
+h1 { font-size: clamp(2.65rem, 8vw, 5.5rem); letter-spacing: -.065em; line-height: .95; margin: 0; }
 h1 span { color: #a5edc8; }
 .intro { color: var(--muted); font-size: 1.05rem; margin: 18px 0 0; }
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
