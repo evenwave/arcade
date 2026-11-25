@@ -5,11 +5,12 @@ const CONFIG = {
   "boardSize": 8,
   "blockTypes": 5,
   "startingBlocks": 20,
-  "incomingBlocks": 2,
+  "incomingBlocks": 3,
   "minimumMatch": 3,
   "pointsPerBlock": 100,
   "slideMs": 170,
   "matchMs": 180,
+  "cascadeMs": 480,
   "spawnMs": 180
 };
 
@@ -72,13 +73,23 @@ const boardEl = $("board");
 const tileLayer = $("tiles");
 const tileNodes = new Map();
 const storageKey = "cascade-shift-best-v1";
-let board, nextId, score, moves, cleared, bestCombo, parity, busy, ended;
+let board, nextId, score, moves, cleared, bestCombo, parity, busy, ended, comboTurns;
 let best = 0;
 try { best = Math.max(0, Number(localStorage.getItem(storageKey)) || 0); } catch {}
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const wait = ms => new Promise(resolve => setTimeout(resolve, reducedMotion ? 0 : ms));
 const format = n => n.toLocaleString();
 const setStatus = text => { $("status").textContent = text; };
+function showCombo(wave, points, count){
+  const banner = $("combo-banner");
+  banner.textContent = "CASCADE ×"+wave+"! · +"+format(points)+" points · "+count+" cleared";
+  banner.hidden = false;
+  banner.classList.remove("pop");
+  // Restart the visual pulse for every new cascade wave.
+  void banner.offsetWidth;
+  banner.classList.add("pop");
+}
+function resetCombo(){ $("combo-banner").hidden = true; }
 document.documentElement.style.setProperty("--size",CONFIG.boardSize);
 for(let i=0;i<CONFIG.boardSize**2;i++){
   const cell=document.createElement("div");cell.className="cell";$("cells").append(cell);
@@ -130,6 +141,7 @@ function updateStats(){
   $("moves").textContent=format(moves);
   $("combo").textContent=bestCombo?"×"+bestCombo:"—";
   $("cleared").textContent=format(cleared);
+  $("combo-turns").textContent=format(comboTurns);
   $("efficiency").textContent=moves?(cleared/moves).toFixed(2):"0.00";
   $("occupancy").textContent=count+" / "+capacity+" blocks";
   $("fill").style.width=(count/capacity*100)+"%";
@@ -150,7 +162,8 @@ function setBusy(value){
 }
 function start(){
   if(busy)return;
-  nextId=score=moves=cleared=bestCombo=parity=0;
+  nextId=score=moves=cleared=bestCombo=parity=comboTurns=0;
+  resetCombo();
   ended=false;
   tileLayer.replaceChildren();tileNodes.clear();
   board=startingBoard();
@@ -168,8 +181,16 @@ async function resolveMatches(dir,turn){
     bestCombo=Math.max(bestCombo,turn.wave);
     updateBest();updateStats();
     setStatus("×"+turn.wave+" · "+ids.size+" blocks cleared · +"+format(points));
-    for(const id of ids)tileNodes.get(id)?.classList.add("matched");
-    await wait(CONFIG.matchMs);
+    if(turn.wave>1){
+      if(turn.wave===2)comboTurns++;
+      showCombo(turn.wave,turn.points,turn.cleared);
+      updateStats();
+    }
+    for(const id of ids){
+      const node=tileNodes.get(id);
+      if(node)node.classList.add("matched", ...(turn.wave>1?["cascade-match"]:[]));
+    }
+    await wait(turn.wave>1?CONFIG.cascadeMs:CONFIG.matchMs);
     board=removeMatches(board,ids);render(false);
     const next=slide(board,dir);
     if(changed(board,next)){board=next;render(false);await wait(CONFIG.slideMs);}
@@ -202,6 +223,7 @@ async function move(dir){
   const turn={wave:0,cleared:0,points:0};
   try{
     moves++;
+    resetCombo();
     $("gravity").textContent=ARROWS[dir]+" Shift "+dir;
     board=next;render(false);await wait(CONFIG.slideMs);
     await resolveMatches(dir,turn);

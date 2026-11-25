@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#10151f">
   <title>Cascade Shift | Evenwave's Arcade</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="game.js" defer></script>
+  <link rel="stylesheet" href="styles.css?v=2">
+  <script src="game.js?v=2" defer></script>
 </head>
 <body>
   <main class="game">
     <header>
-      <div class="topline"><a href="../">← Arcade</a><span>ARCADE / PROTOTYPE 01</span></div>
+      <div class="topline"><a href="../">← Arcade</a><span>ARCADE / PROTOTYPE 02</span></div>
       <h1>Cascade <span>Shift</span></h1>
       <p>Shift the board. Match three. Make every move count.</p>
     </header>
@@ -31,6 +31,7 @@
           <h2>Gridlocked</h2><p id="summary"></p><button id="again" type="button">Play again</button>
         </div>
       </div>
+      <div id="combo-banner" class="combo-banner" aria-hidden="true" hidden></div>
       <p id="status" class="status" role="status">Use the arrows to shift all blocks.</p>
       <div class="controls" aria-label="Direction controls">
         <button class="up" data-dir="up" aria-label="Shift up">↑</button>
@@ -42,8 +43,8 @@
     </section>
     <section class="details" aria-label="How to play">
       <h2>Make room. Build chains.</h2>
-      <p>Every valid shift introduces up to two blocks from the opposite edge. Match three or more identical shapes in a row or column to clear them. Free cascades multiply your score. A shift that does nothing costs nothing.</p>
-      <div class="mini-stats"><div>Cleared <strong id="cleared">0</strong></div><div>Cleared per move <strong id="efficiency">0.00</strong></div></div>
+      <p>Every valid shift introduces up to three blocks from the opposite edge. Match three or more identical shapes in a row or column to clear them. Free cascades multiply your score. A shift that does nothing costs nothing.</p>
+      <div class="mini-stats"><div>Cleared <strong id="cleared">0</strong></div><div>Cleared per move <strong id="efficiency">0.00</strong></div><div>Combo turns <strong id="combo-turns">0</strong></div></div>
       <p class="fine">No timer or move limit. Your round ends when no direction can move the board or clear a match. Personal best is stored on this browser only.</p>
     </section>
   </main>
