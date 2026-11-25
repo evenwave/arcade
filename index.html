@@ -3,27 +3,64 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Stack Shift</title>
+  <meta name="theme-color" content="#111421">
+  <title>Arcade | Select your game</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="arcade.js" defer></script>
 </head>
 <body>
-  <main class="game-page">
-    <header>
-      <h1>Stack Shift</h1>
-      <p>Press Space or tap the board to stack a sliding block. Overhangs get trimmed.</p>
+  <main class="lobby">
+    <header class="hero">
+      <p class="eyebrow">THE GAME COLLECTION</p>
+      <h1>ARCADE<span>.</span></h1>
+      <p class="intro">Pick a game, chase your high score, and have fun.</p>
     </header>
-    <nav aria-label="Stack Shift pages"><a class="page-link" href="leaderboard.html">Leaderboard</a></nav>
-    <section class="panel" aria-label="Stack Shift game">
-      <dl class="stats">
-        <div><dt>Blocks</dt><dd id="score">0</dd></div>
-        <div><dt>Perfect drops</dt><dd id="perfect">0</dd></div>
-      </dl>
-      <canvas id="board" width="480" height="400" aria-label="Stack Shift playfield"></canvas>
-      <button id="action" type="button">Start</button>
-      <p id="status" role="status">Ready to stack.</p>
+    <section aria-labelledby="games-title">
+      <div class="section-head">
+        <div><h2 id="games-title">Select your game</h2><p>2 games available · More on the way</p></div>
+        <button type="button" id="toggle-upcoming" aria-expanded="true" aria-controls="upcoming" hidden>Hide upcoming</button>
+      </div>
+      <div class="game-grid">
+        <article class="game-card stack">
+          <a class="game-art stack-art" href="stack-shift/" aria-label="Play Stack Shift">
+            <div class="stack-tower" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          </a>
+          <div class="card-body">
+            <p class="genre">01 / TIMING &amp; PRECISION</p>
+            <h3>Stack Shift</h3>
+            <p>Time each drop, build your tower, and keep the stack alive.</p>
+            <div class="card-actions"><a class="play" href="stack-shift/">Play game <span aria-hidden="true">→</span></a><a class="scores" href="stack-shift/leaderboard.html">Leaderboard</a></div>
+          </div>
+        </article>
+        <article class="game-card cascade">
+          <a class="game-art cascade-art" href="cascade-shift/" aria-label="Play Cascade Shift">
+            <div class="tile-board" aria-hidden="true">
+              <span></span><span class="pink"></span><span></span><span class="gold"></span><span></span>
+              <span class="blue"></span><span></span><span class="green"></span><span></span><span class="violet"></span>
+              <span></span><span class="pink"></span><span class="pink"></span><span class="pink"></span><span></span>
+              <span class="gold"></span><span></span><span class="violet"></span><span class="blue"></span><span></span>
+              <span></span><span class="green"></span><span></span><span class="gold"></span><span class="green"></span>
+            </div>
+          </a>
+          <div class="card-body">
+            <p class="genre">02 / STRATEGY &amp; PUZZLE</p>
+            <h3>Cascade Shift</h3>
+            <p>Slide the entire board, match three, and chain reactions before space runs out.</p>
+            <div class="card-actions"><a class="play" href="cascade-shift/">Play game <span aria-hidden="true">→</span></a></div>
+          </div>
+        </article>
+        <div class="upcoming" id="upcoming">
+          <article class="game-card placeholder"><div class="game-art future-art" aria-hidden="true"><span>?</span></div><div class="card-body"><p class="genre">03 / IN DEVELOPMENT</p><h3>Coming soon</h3><p>More games are on the way.</p></div></article>
+          <article class="game-card placeholder"><div class="game-art future-art" aria-hidden="true"><span>?</span></div><div class="card-body"><p class="genre">04 / IN DEVELOPMENT</p><h3>Coming soon</h3><p>More games are on the way.</p></div></article>
+          <article class="game-card placeholder"><div class="game-art future-art" aria-hidden="true"><span>?</span></div><div class="card-body"><p class="genre">05 / IN DEVELOPMENT</p><h3>Coming soon</h3><p>More games are on the way.</p></div></article>
+          <article class="game-card placeholder"><div class="game-art future-art" aria-hidden="true"><span>?</span></div><div class="card-body"><p class="genre">06 / IN DEVELOPMENT</p><h3>Coming soon</h3><p>More games are on the way.</p></div></article>
+          <article class="game-card placeholder"><div class="game-art future-art" aria-hidden="true"><span>?</span></div><div class="card-body"><p class="genre">07 / IN DEVELOPMENT</p><h3>Coming soon</h3><p>More games are on the way.</p></div></article>
+          <article class="game-card placeholder"><div class="game-art future-art" aria-hidden="true"><span>?</span></div><div class="card-body"><p class="genre">08 / IN DEVELOPMENT</p><h3>Coming soon</h3><p>More games are on the way.</p></div></article>
+          <article class="game-card placeholder"><div class="game-art future-art" aria-hidden="true"><span>?</span></div><div class="card-body"><p class="genre">09 / IN DEVELOPMENT</p><h3>Coming soon</h3><p>More games are on the way.</p></div></article>
+        </div>
+      </div>
     </section>
+    <footer>ARCADE <span>·</span> A growing collection of browser games.</footer>
   </main>
-  <script src="scores.js"></script>
-  <script src="game.js"></script>
 </body>
 </html>

@@ -1,0 +1,38 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  background: #111720;
+  color: #f2f7ff;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 940px; margin: auto; padding: 28px 20px; }
+h1 { font-size: clamp(2.7rem, 8vw, 5rem); line-height: 1; margin: 0; letter-spacing: -.06em; }
+p { color: #bac7d8; line-height: 1.5; }
+.panel { background: #192330; border: 1px solid #344359; border-radius: 16px; padding: 16px; }
+.stats { display: flex; gap: 24px; margin: 0 0 12px; }
+.stats div { display: grid; gap: 2px; }
+dt { color: #bac7d8; font-size: .85rem; }
+dd { margin: 0; font: bold 1.5rem ui-monospace, monospace; }
+canvas { display: block; width: 100%; height: auto; background: #101925; border-radius: 10px; touch-action: manipulation; }
+button { margin-top: 12px; width: 100%; border: 0; border-radius: 8px; padding: 12px; background: #b7f477; color: #17230d; font: bold 1rem system-ui; cursor: pointer; touch-action: manipulation; }
+button:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+#status { margin: 10px 0 0; }
+table { width: 100%; margin-top: 12px; border-collapse: collapse; text-align: right; font-variant-numeric: tabular-nums; }
+th, td { padding: 8px 4px; border-bottom: 1px solid #344359; }
+th:first-child, td:first-child { text-align: left; }
+
+.game-page, .leaderboard-page { max-width: 690px; }
+nav { margin: 16px 0; }
+.page-link {
+  display: inline-block;
+  border: 1px solid #b7f477;
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: #b7f477;
+  font-weight: bold;
+  text-decoration: none;
+}
+.page-link:hover { background: #253820; }
+.page-link:focus-visible { outline: 3px solid white; outline-offset: 3px; }
