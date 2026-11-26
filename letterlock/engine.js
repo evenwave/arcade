@@ -1,11 +1,9 @@
 "use strict";
-// Letterlock pure game rules; kept separate from the browser interface.
+// Letterlock pure game rules.
 const CONFIG = {
   "size": 8,
   "startingLetters": 24,
-  "obstacleColors": 3,
-  "incomingLetters": 1,
-  "incomingObstacles": 2,
+  "incomingLetters": 3,
   "minWord": 3,
   "maxWord": 8,
   "letterWeights": {
@@ -59,22 +57,26 @@ function slide(grid,dir){const n=grid.length,out=blank(),vertical=dir==="up"||di
 
 function changed(a,b){return a.some((row,r)=>row.some((t,c)=>t!==b[r][c]));}
 
-function colorMatches(grid){const ids=new Set(),n=grid.length;for(const vertical of [false,true])for(let i=0;i<n;i++){const at=j=>vertical?grid[j][i]:grid[i][j];for(let j=0;j<n;){const t=at(j);if(t?.kind!=="obstacle"){j++;continue;}let end=j+1;while(end<n&&at(end)?.kind==="obstacle"&&at(end).color===t.color)end++;if(end-j>=3)for(let k=j;k<end;k++)ids.add(at(k).id);j=end;}}return ids;}
-
 function removeIds(grid,ids){return grid.map(row=>row.map(t=>t&&ids.has(t.id)?null:t));}
 
-function canShift(grid,dir){const next=slide(grid,dir);return changed(grid,next)||colorMatches(next).size>0;}
+function canShift(grid,dir){return changed(grid,slide(grid,dir));}
 
 function entrySlots(grid,dir,parity){const n=grid.length,out=[];for(let i=parity;i<n;i+=2){const [r,c]=dir==="right"?[i,0]:dir==="left"?[i,n-1]:dir==="down"?[0,i]:[n-1,i];if(!grid[r][c])out.push([r,c]);}return out;}
 
-function spawnPlan(grid,dir,parity,rng=Math.random){const slots=shuffle(entrySlots(grid,dir,parity),rng).slice(0,CONFIG.incomingLetters+CONFIG.incomingObstacles);const types=shuffle(Array.from({length:slots.length},(_,i)=>i<CONFIG.incomingLetters?"letter":"obstacle"),rng);return slots.map(([r,c],i)=>({r,c,kind:types[i]}));}
+function spawnPlan(grid,dir,parity,rng=Math.random){return shuffle(entrySlots(grid,dir,parity),rng).slice(0,CONFIG.incomingLetters).map(([r,c])=>({r,c,kind:"letter"}));}
 
-function lineBetween(grid,a,b){if(!a||!b||a[0]!==b[0]&&a[1]!==b[1])return null;const dr=Math.sign(b[0]-a[0]),dc=Math.sign(b[1]-a[1]),len=Math.max(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]))+1;const path=Array.from({length:len},(_,i)=>[a[0]+dr*i,a[1]+dc*i]);return path.every(([r,c])=>grid[r]?.[c]?.kind==="letter")?path:null;}
+function same(a,b){return !!a&&!!b&&a[0]===b[0]&&a[1]===b[1];}
+
+function adjacent(a,b){return !!a&&!!b&&!same(a,b)&&Math.abs(a[0]-b[0])<=1&&Math.abs(a[1]-b[1])<=1;}
+
+function extendPath(grid,path,at){if(!at||grid[at[0]]?.[at[1]]?.kind!=="letter")return path;const n=path.length;if(!n)return [at];if(same(path[n-1],at))return path;if(n>1&&same(path[n-2],at))return path.slice(0,-1);if(n>=CONFIG.maxWord||!adjacent(path[n-1],at)||path.some(p=>same(p,at)))return path;return [...path,at];}
 
 function wordAt(grid,path){return path.map(([r,c])=>grid[r][c].letter).join("");}
 
-function findWord(grid,dictionary,target=null){const n=grid.length;for(let r=0;r<n;r++)for(let c=0;c<n;c++){if(grid[r][c]?.kind!=="letter")continue;for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]){let word="",path=[];for(let i=0;i<CONFIG.maxWord;i++){const rr=r+dr*i,cc=c+dc*i,t=grid[rr]?.[cc];if(t?.kind!=="letter")break;word+=t.letter;path.push([rr,cc]);if(target&&!target.startsWith(word))break;if(word.length>=CONFIG.minWord&&(target?word===target:dictionary.has(word)))return path;}}}return null;}
+function buildTrie(dictionary){const root={children:Object.create(null),word:false};for(const word of dictionary){if(word.length<CONFIG.minWord||word.length>CONFIG.maxWord)continue;let node=root;for(const c of word){node.children[c]??={children:Object.create(null),word:false};node=node.children[c];}node.word=true;}return root;}
 
-function clearWord(grid,path,dictionary){if(!path||path.length<CONFIG.minWord||path.length>CONFIG.maxWord)return null;const exact=lineBetween(grid,path[0],path[path.length-1]);if(!exact||exact.length!==path.length||!exact.every((p,i)=>p[0]===path[i][0]&&p[1]===path[i][1]))return null;const word=wordAt(grid,exact);if(!dictionary.has(word))return null;return {word,points:CONFIG.points[word.length],grid:removeIds(grid,new Set(exact.map(([r,c])=>grid[r][c].id)))};}
+function findWord(grid,trie,target=null){if(target&&(target.length<CONFIG.minWord||target.length>CONFIG.maxWord))return null;const n=grid.length,used=new Uint8Array(n*n),path=[];function visit(r,c,node){const t=grid[r]?.[c],i=r*n+c;if(t?.kind!=="letter"||used[i])return null;if(target&&t.letter!==target[path.length])return null;const child=node.children[t.letter];if(!child)return null;used[i]=1;path.push([r,c]);let result=null;if(child.word&&(!target||path.length===target.length))result=path.slice();else if(path.length<CONFIG.maxWord&&(!target||path.length<target.length)){for(let dr=-1;dr<=1&&!result;dr++)for(let dc=-1;dc<=1&&!result;dc++)if(dr||dc)result=visit(r+dr,c+dc,child);}path.pop();used[i]=0;return result;}for(let r=0;r<n;r++)for(let c=0;c<n;c++){const result=visit(r,c,trie);if(result)return result;}return null;}
 
-function gameOver(grid,dictionary){return !DIRECTIONS.some(d=>canShift(grid,d))&&!findWord(grid,dictionary);}
+function clearWord(grid,path,dictionary){if(!path||path.length<CONFIG.minWord||path.length>CONFIG.maxWord)return null;const seen=new Set();for(let i=0;i<path.length;i++){const [r,c]=path[i],t=grid[r]?.[c];if(t?.kind!=="letter"||seen.has(t.id)||(i&&!adjacent(path[i-1],path[i])))return null;seen.add(t.id);}const word=wordAt(grid,path);if(!dictionary.has(word))return null;return {word,points:CONFIG.points[word.length],grid:removeIds(grid,seen)};}
+
+function gameOver(grid,trie){return !DIRECTIONS.some(d=>canShift(grid,d))&&!findWord(grid,trie);}
