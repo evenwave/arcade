@@ -55,7 +55,8 @@ const CONFIG = {
   "searchBudget": 40000,
   "minOpportunityLength": 5,
   "wordTimeMs": 30000,
-  "difficultyStages": [{"at":0,"duration":30000},{"at":90000,"duration":25000},{"at":150000,"duration":20000}],
+  "difficultyStages": [{"at":0,"duration":30000},{"at":90000,"duration":25000},{"at":150000,"duration":20000},{"at":300000,"duration":15000}],
+  "selectionTimeMs": 5000,
   "maxOpportunityLength": 8
 };
 const DIRECTIONS = ["up","down","left","right"];
@@ -182,3 +183,8 @@ function formatElapsed(ms){const seconds=Math.floor(ms/1000);return String(Math.
 function timerPhase(ms){return ms<=10000?"urgent":"normal";}
 
 function togglePath(grid,path,at){if(!at||grid[at[0]]?.[at[1]]?.kind!=="letter")return path;const index=path.findIndex(p=>same(p,at));return index>=0?path.slice(0,index):extendPath(grid,path,at);}
+
+// A selection has a fixed lifetime; extensions and backtracking never renew it.
+function nextSelectionDeadline(deadline,length,now){return length===0?null:deadline??now+CONFIG.selectionTimeMs;}
+function selectionExpired(deadline,now){return deadline!==null&&now>=deadline;}
+function directionForKey(key){return ({arrowup:"up",arrowdown:"down",arrowleft:"left",arrowright:"right",w:"up",a:"left",s:"down",d:"right"})[key.toLowerCase()];}

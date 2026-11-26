@@ -4,12 +4,12 @@ const $=id=>document.getElementById(id);
 const boardEl=$("board"), layer=$("tiles"), input=$("word-input");
 const nodes=new Map(), dictionary=new Set(), generationWords=new Set();
 let generationTrie;
-const storageKey="letterlock-best-v10";
+const storageKey="letterlock-best-v11";
 const arrows={up:"↑",down:"↓",left:"←",right:"→"};
 let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, timeouts=0, longest="", parity=0, busy=false, ended=false, ready=false, active=false, selection=[], gesture=null;
 try{best=Math.max(0,Number(localStorage.getItem(storageKey))||0);}catch{}
 const clock=newWordClock(),roundClock=newRoundClock();
-let notificationHandle=null;
+let notificationHandle=null,selectionDeadline=null,selectionHandle=null;
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,matchMedia("(prefers-reduced-motion: reduce)").matches?0:ms));
 const format=n=>n.toLocaleString();
 const status=t=>{$("status").textContent=t;};
@@ -67,7 +67,9 @@ async function timeout(){
   }finally{finishAction(true);}
 }
 function tickClock(){
-  if(!ready||!active||ended||busy)return;
+  if(!ready||!active||ended)return;
+  expireSelection();
+  if(busy)return;
   paintClock();
   if(clockRemaining(clock,performance.now())<=0)void timeout();
 }
@@ -109,8 +111,29 @@ function preview(){
   document.querySelectorAll("[data-word-length]").forEach(row=>row.classList.toggle("current",Number(row.dataset.wordLength)===n));
   $("word-preview").textContent=Object.hasOwn(CONFIG.points,n)?n+" letters · "+format(CONFIG.points[n])+" possible points":"3–12 letters · Select touching tiles";
 }
-function setSelection(path){selection=path||[];input.value=selection.length?wordAt(grid,selection):"";paintSelection();preview();controls();}
+function setSelection(path){
+  const now=performance.now(),oldDeadline=selectionDeadline;
+  selection=path||[];
+  selectionDeadline=nextSelectionDeadline(oldDeadline,selection.length,now);
+  if(selectionDeadline!==oldDeadline){
+    if(selectionHandle!==null){clearTimeout(selectionHandle);selectionHandle=null;}
+    if(selectionDeadline!==null)scheduleSelectionExpiry();
+  }
+  input.value=selection.length?wordAt(grid,selection):"";paintSelection();preview();controls();
+}
+function scheduleSelectionExpiry(){
+  if(selectionDeadline===null)return;
+  selectionHandle=setTimeout(()=>{
+    selectionHandle=null;
+    if(!expireSelection())scheduleSelectionExpiry();
+  },Math.max(0,selectionDeadline-performance.now()));
+}
 function resetSelection(){gesture=null;setSelection([]);}
+function expireSelection(now=performance.now()){
+  if(!selectionExpired(selectionDeadline,now))return false;
+  // Cancelling the gesture prevents held-pointer movement or release from submitting or restarting it.
+  resetSelection();status("Selection cleared. Reconnect your word.");return true;
+}
 function updateBest(){if(score<=best)return;best=score;try{localStorage.setItem(storageKey,String(best));}catch{}}
 function start(){
   if(!ready||busy)return;
@@ -147,7 +170,7 @@ async function shift(dir){
   }finally{finishAction();}
 }
 async function submitWord(){
-  if(!ready||!active||busy||ended||selection.length<CONFIG.minWord)return;
+  if(!ready||!active||busy||ended||expireSelection()||selection.length<CONFIG.minWord)return;
   // Rejected words do not pause, reset, or otherwise alter the clock or board.
   if(clockRemaining(clock,performance.now())<=0){void timeout();return;}
   const path=selection.slice(),word=wordAt(grid,path);
@@ -177,12 +200,15 @@ function atPointer(e,inner=false){
 }
 boardEl.addEventListener("pointerdown",e=>{
   if(!ready||!active||busy||ended||!e.isPrimary||e.button!==0)return;
+  expireSelection();
   const at=atPointer(e);if(!at||grid[at[0]][at[1]]?.kind!=="letter"){resetSelection();return;}
   e.preventDefault();gesture={id:e.pointerId,start:at,previous:selection.slice(),moved:false,x:e.clientX,y:e.clientY};
+  // Highlight the first letter immediately; the deadline starts on pointerdown, not release.
+  if(!selection.length)setSelection([at]);
   boardEl.setPointerCapture(e.pointerId);
 });
 boardEl.addEventListener("pointermove",e=>{
-  if(!gesture||gesture.id!==e.pointerId)return;
+  if(expireSelection()||!gesture||gesture.id!==e.pointerId)return;
   if(!gesture.moved){
     if(Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)<6)return;
     gesture.moved=true;setSelection([gesture.start]);
@@ -194,7 +220,7 @@ boardEl.addEventListener("pointermove",e=>{
   }
 });
 boardEl.addEventListener("pointerup",e=>{
-  if(!gesture||gesture.id!==e.pointerId)return;const g=gesture;gesture=null;
+  if(expireSelection()||!gesture||gesture.id!==e.pointerId)return;const g=gesture;gesture=null;
   const at=atPointer(e,true);
   if(g.moved){
     const next=extendPath(grid,selection,at);if(next!==selection)setSelection(next);
@@ -213,11 +239,12 @@ document.querySelectorAll("[data-dir]").forEach(b=>b.addEventListener("click",()
 document.addEventListener("keydown",e=>{
   if(e.altKey||e.ctrlKey||e.metaKey||e.isComposing)return;
   if(!active)return;
-  const dirs={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"};
-  if(dirs[e.key]){e.preventDefault();if(!e.repeat)void shift(dirs[e.key]);return;}
+  const dir=directionForKey(e.key);
+  if(dir){e.preventDefault();if(!e.repeat)void shift(dir);return;}
+  if(e.key===" "&&!ended)e.preventDefault();
   if(!ready||!active||busy||ended)return;
   if(e.key==="Escape"){resetSelection();return;}
-  if(e.key==="Enter"&&selection.length>=CONFIG.minWord){e.preventDefault();void submitWord();}
+  if((e.key==="Enter"||e.key===" ")&&selection.length>=CONFIG.minWord){e.preventDefault();if(!e.repeat)void submitWord();}
 });
 $("start-game").addEventListener("click",start);
 $("start-dialog").addEventListener("cancel",e=>e.preventDefault());
