@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#151c28">
+  <title>Letterlock | Evenwave's Arcade</title>
+  <link rel="stylesheet" href="styles.css?v=1">
+  <script src="engine.js?v=1" defer></script>
+  <script src="game.js?v=1" defer></script>
+</head>
+<body>
+<main class="game">
+  <header>
+    <div class="topline"><a href="../">← Arcade</a><span>ARCADE / PROTOTYPE 01</span></div>
+    <h1>Letter<span>lock</span></h1>
+    <p>Build words. Manage obstacles. Make every shift count.</p>
+  </header>
+  <section class="scoreboard" aria-label="Game statistics">
+    <div class="stat primary"><span>Score</span><strong id="score">0</strong></div>
+    <div class="stat"><span>Personal best</span><strong id="best">0</strong></div>
+    <div class="stat"><span>Shifts</span><strong id="moves">0</strong></div>
+    <div class="stat"><span>Words</span><strong id="words">0</strong></div>
+  </section>
+  <section class="playfield" aria-label="Game area">
+    <div class="board-head"><span id="occupancy">Loading…</span><span id="gravity">Choose a direction</span></div>
+    <div class="meter" role="progressbar" aria-label="Board occupancy" aria-valuemin="0" aria-valuemax="64" aria-valuenow="0"><div id="fill"></div></div>
+    <div class="board" id="board" role="group" aria-label="Letterlock board">
+      <div id="cells" class="cells" aria-hidden="true"></div>
+      <div id="tiles" class="tiles"></div>
+      <div id="over" class="overlay" hidden>
+        <h2>Gridlocked</h2><p id="summary"></p><p id="round-longest"></p>
+        <button id="again" type="button">Play again</button>
+      </div>
+    </div>
+    <form id="word-form" autocomplete="off">
+      <label for="word-input">Your word</label>
+      <div class="word-row"><input id="word-input" type="text" maxlength="8" placeholder="Select or type a word" spellcheck="false" autocapitalize="characters" disabled><button id="submit" type="submit" disabled>Submit</button><button id="clear" type="button" disabled aria-label="Clear selection">×</button></div>
+      <p class="word-preview" id="word-preview">3–8 letters · Straight line</p>
+    </form>
+    <p id="status" class="status" role="status">Loading local dictionary…</p>
+    <div class="controls" aria-label="Direction controls">
+      <button data-dir="up" class="up" aria-label="Shift up" disabled>↑</button>
+      <button data-dir="left" class="left" aria-label="Shift left" disabled>←</button>
+      <button data-dir="down" class="down" aria-label="Shift down" disabled>↓</button>
+      <button data-dir="right" class="right" aria-label="Shift right" disabled>→</button>
+    </div>
+    <div class="footer-controls"><span>Arrow keys or buttons to shift</span><button id="restart" type="button" disabled>New game</button></div>
+  </section>
+  <section class="details">
+    <h2>Make room for words</h2>
+    <p>Each valid shift adds up to two colored obstacles and one letter along alternating edge lanes. Three or more obstacles of the same color in a row or column automatically clear and may cascade. They earn no points.</p>
+    <p>Drag along a word to submit it, click its letters or endpoints and press Submit, or type the word and press Enter. Words must be contiguous in a straight horizontal or vertical line, in either direction. Only the selected letters disappear; nothing else moves and no new blocks appear.</p>
+    <div class="mini-stats"><div>Longest word <strong id="longest">—</strong></div><div>Obstacles cleared <strong id="obstacles">0</strong></div><div>Best color chain <strong id="chain">—</strong></div></div>
+    <div class="scoring"><strong>Word scoring</strong><div class="score-table"><span>3 letters <b>100</b></span><span>4 letters <b>250</b></span><span>5 letters <b>600</b></span><span>6 letters <b>1,200</b></span><span>7 letters <b>2,500</b></span><span>8 letters <b>5,000</b></span></div></div>
+    <p class="fine">No timer or move limit. The round ends only when no shifts and no valid words remain. The prototype uses a bundled common-English dictionary; some valid words may be missing. Your personal best is saved in this browser.</p>
+    <p class="fine"><a href="https://github.com/dolph/dictionary">Dictionary source: dolph/dictionary</a></p>
+  </section>
+</main>
+</body>
+</html>
