@@ -2,15 +2,20 @@
 // Browser interface. Game rules live in engine.js.
 const $=id=>document.getElementById(id);
 const boardEl=$("board"), layer=$("tiles"), input=$("word-input");
-const nodes=new Map(), dictionary=new Set();
-const storageKey="letterlock-best-v3";
+const nodes=new Map(), dictionary=new Set(), generationWords=new Set();
+let generationTrie;
+const storageKey="letterlock-best-v4";
 const arrows={up:"↑",down:"↓",left:"←",right:"→"};
 let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, misses=0, longest="", parity=0, busy=false, ended=false, ready=false, selection=[], gesture=null;
 try{best=Math.max(0,Number(localStorage.getItem(storageKey))||0);}catch{}
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,matchMedia("(prefers-reduced-motion: reduce)").matches?0:ms));
 const format=n=>n.toLocaleString();
 const status=t=>{$("status").textContent=t;};
-const makeLetter=()=>({id:++nextId,kind:"letter",letter:randomLetter()});
+const makeLetter=(letter=randomLetter())=>({id:++nextId,kind:"letter",letter});
+function addLetters(plan){
+  const letters=chooseSpawnLetters(grid,plan,generationTrie);
+  plan.forEach(({r,c},i)=>{grid[r][c]=makeLetter(letters[i]);});
+}
 for(let i=0;i<CONFIG.size**2;i++){const cell=document.createElement("div");cell.className="cell";$("cells").append(cell);}
 function stats(){
   const count=grid.flat().filter(Boolean).length, max=CONFIG.size**2;
@@ -54,8 +59,7 @@ function updateBest(){if(score<=best)return;best=score;try{localStorage.setItem(
 function start(){
   if(!ready||busy)return;
   ended=false;nextId=score=moves=words=misses=parity=0;longest="";grid=blank();layer.replaceChildren();nodes.clear();resetSelection();
-  const positions=shuffle(Array.from({length:CONFIG.size**2},(_,i)=>[Math.floor(i/CONFIG.size),i%CONFIG.size]));
-  for(const [r,c] of positions.slice(0,CONFIG.startingLetters))grid[r][c]=makeLetter();
+  for(const {r,c,letter} of startingLayout(generationWords))grid[r][c]=makeLetter(letter);
   $("over").hidden=true;$("gravity").textContent="Choose a direction";status("Every action adds four letters. Aim for five-letter words or longer.");render(false);controls();
 }
 function checkEnd(){
@@ -76,7 +80,7 @@ async function shift(dir){
   try{
     moves++;$("gravity").textContent=arrows[dir]+" Shift "+dir;grid=next;render(false);await wait(CONFIG.slideMs);
     const plan=spawnPlan(grid,dir,parity);parity=1-parity;
-    for(const {r,c} of plan)grid[r][c]=makeLetter();
+    addLetters(plan);
     render();await wait(CONFIG.spawnMs);
     status(plan.length+" letter"+(plan.length===1?"":"s")+" added. Aim for a long word.");
     checkEnd();
@@ -98,7 +102,7 @@ async function submitWord(){
       misses++;stats();status(word+" is not in the dictionary. Four-letter penalty.");
     }
     const plan=result?wordSpawnPlan(grid,path):invalidSpawnPlan(grid);
-    for(const {r,c} of plan)grid[r][c]=makeLetter();
+    addLetters(plan);
     render();await wait(CONFIG.spawnMs);
     if(result){
       const net=plan.length-path.length;
@@ -160,9 +164,13 @@ document.addEventListener("keydown",e=>{
 $("restart").addEventListener("click",start);$("again").addEventListener("click",start);
 async function load(){
   try{
-    const response=await fetch("words.txt?v=1");if(!response.ok)throw Error("Dictionary unavailable");
-    for(const word of (await response.text()).toUpperCase().split(/\s+/))if(/^[A-Z]{3,8}$/.test(word))dictionary.add(word);
-    if(dictionary.size<10000)throw Error("Incomplete dictionary");
+    const [validation,common]=await Promise.all([fetch("enable-words.txt?v=4"),fetch("words.txt?v=1")]);
+    if(!validation.ok||!common.ok)throw Error("Dictionary unavailable");
+    const [validationText,commonText]=await Promise.all([validation.text(),common.text()]);
+    for(const word of validationText.toUpperCase().split(/\s+/))if(/^[A-Z]{3,8}$/.test(word))dictionary.add(word);
+    for(const word of commonText.toUpperCase().split(/\s+/))if(/^[A-Z]{3,8}$/.test(word)&&dictionary.has(word))generationWords.add(word);
+    if(dictionary.size<80000||generationWords.size<17000)throw Error("Incomplete dictionary");
+    generationTrie=buildGenerationTrie(generationWords);
     ready=true;start();
   }catch(error){status("Could not load the dictionary. Reload this page to try again.");console.error(error);}
 }
