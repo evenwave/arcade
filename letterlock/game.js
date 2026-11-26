@@ -4,9 +4,9 @@ const $=id=>document.getElementById(id);
 const boardEl=$("board"), layer=$("tiles"), input=$("word-input");
 const nodes=new Map(), dictionary=new Set(), generationWords=new Set();
 let generationTrie;
-const storageKey="letterlock-best-v8";
+const storageKey="letterlock-best-v9";
 const arrows={up:"↑",down:"↓",left:"←",right:"→"};
-let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, timeouts=0, longest="", parity=0, busy=false, ended=false, ready=false, selection=[], gesture=null;
+let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, timeouts=0, longest="", parity=0, busy=false, ended=false, ready=false, active=false, selection=[], gesture=null;
 try{best=Math.max(0,Number(localStorage.getItem(storageKey))||0);}catch{}
 const clock=newWordClock();
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,matchMedia("(prefers-reduced-motion: reduce)").matches?0:ms));
@@ -20,14 +20,14 @@ function addLetters(plan){
 for(let i=0;i<CONFIG.size**2;i++){const cell=document.createElement("div");cell.className="cell";$("cells").append(cell);}
 function paintClock(){
   const ms=clockRemaining(clock,performance.now()),seconds=Math.ceil(ms/1000);
-  const phase=ended?"stopped":timerPhase(ms);
+  const phase=!active||ended?"stopped":timerPhase(ms);
   $("word-timer").dataset.phase=phase;
   $("timer-value").textContent=String(seconds).padStart(2,"0")+"s";
   $("timer-fill").style.width=(ms/CONFIG.wordTimeMs*100)+"%";
   $("timer-meter").setAttribute("aria-valuenow",seconds);
 }
 function beginAction(){
-  if(!ready||busy||ended)return false;
+  if(!ready||!active||busy||ended)return false;
   const now=performance.now();
   if(clockRemaining(clock,now)<=0){void timeout();return false;}
   pauseClock(clock,now);busy=true;controls();paintClock();return true;
@@ -39,7 +39,7 @@ function finishAction(reset=false){
   paintClock();controls();
 }
 async function timeout(){
-  if(!ready||busy||ended||clockRemaining(clock,performance.now())>0)return;
+  if(!ready||!active||busy||ended||clockRemaining(clock,performance.now())>0)return;
   pauseClock(clock,performance.now());busy=true;gesture=null;controls();paintClock();
   try{
     timeouts++;const plan=invalidSpawnPlan(grid);addLetters(plan);render();
@@ -48,7 +48,7 @@ async function timeout(){
   }finally{finishAction(true);}
 }
 function tickClock(){
-  if(!ready||ended||busy)return;
+  if(!ready||!active||ended||busy)return;
   paintClock();
   if(clockRemaining(clock,performance.now())<=0)void timeout();
 }
@@ -74,10 +74,11 @@ function render(animateNew=true){
   paintSelection();stats();
 }
 function controls(){
-  const disabled=!ready||busy||ended;
+  const disabled=!ready||!active||busy||ended;
   document.querySelectorAll("[data-dir]").forEach(b=>b.disabled=disabled);
   input.disabled=disabled;$("submit").disabled=disabled||selection.length<CONFIG.minWord;$("clear").disabled=disabled;
-  $("restart").disabled=!ready||busy;
+  $("restart").disabled=!ready||!active||busy;
+  $("start-game").disabled=!ready||active;
 }
 function paintSelection(){
   for(const node of nodes.values())node.classList.remove("selected");
@@ -93,8 +94,9 @@ function resetSelection(){gesture=null;setSelection([]);}
 function updateBest(){if(score<=best)return;best=score;try{localStorage.setItem(storageKey,String(best));}catch{}}
 function start(){
   if(!ready||busy)return;
-  ended=false;nextId=score=moves=words=timeouts=parity=0;longest="";grid=blank();layer.replaceChildren();nodes.clear();resetSelection();
+  active=true;ended=false;nextId=score=moves=words=timeouts=parity=0;longest="";grid=blank();layer.replaceChildren();nodes.clear();resetSelection();
   for(const {r,c,letter} of startingLayout(generationWords))grid[r][c]=makeLetter(letter);
+  if($("start-dialog").open)$("start-dialog").close();
   $("over").hidden=true;$("gravity").textContent="Choose a direction";status("Find a word before the timer expires. Aim for five letters or longer.");render(false);resetClock(clock);resumeClock(clock,performance.now());paintClock();controls();
 }
 function checkEnd(){
@@ -108,7 +110,7 @@ async function flash(ids){
   await wait(CONFIG.clearMs);grid=removeIds(grid,ids);render(false);
 }
 async function shift(dir){
-  if(!ready||busy||ended||!DIRECTIONS.includes(dir))return;
+  if(!ready||!active||busy||ended||!DIRECTIONS.includes(dir))return;
   const next=slide(grid,dir);
   if(!changed(grid,next)){status("No movement in that direction. No letters added.");return;}
   if(!beginAction())return;
@@ -123,7 +125,7 @@ async function shift(dir){
   }finally{finishAction();}
 }
 async function submitWord(){
-  if(!ready||busy||ended||selection.length<CONFIG.minWord)return;
+  if(!ready||!active||busy||ended||selection.length<CONFIG.minWord)return;
   // Rejected words do not pause, reset, or otherwise alter the clock or board.
   if(clockRemaining(clock,performance.now())<=0){void timeout();return;}
   const path=selection.slice(),word=wordAt(grid,path);
@@ -152,7 +154,7 @@ function atPointer(e,inner=false){
   return [r,c];
 }
 boardEl.addEventListener("pointerdown",e=>{
-  if(!ready||busy||ended||!e.isPrimary||e.button!==0)return;
+  if(!ready||!active||busy||ended||!e.isPrimary||e.button!==0)return;
   const at=atPointer(e);if(!at||grid[at[0]][at[1]]?.kind!=="letter"){resetSelection();return;}
   e.preventDefault();gesture={id:e.pointerId,start:at,previous:selection.slice(),moved:false,x:e.clientX,y:e.clientY};
   boardEl.setPointerCapture(e.pointerId);
@@ -188,12 +190,15 @@ $("clear").addEventListener("click",()=>resetSelection());
 document.querySelectorAll("[data-dir]").forEach(b=>b.addEventListener("click",()=>void shift(b.dataset.dir)));
 document.addEventListener("keydown",e=>{
   if(e.altKey||e.ctrlKey||e.metaKey||e.isComposing)return;
+  if(!active)return;
   const dirs={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"};
   if(dirs[e.key]){e.preventDefault();if(!e.repeat)void shift(dirs[e.key]);return;}
-  if(!ready||busy||ended)return;
+  if(!ready||!active||busy||ended)return;
   if(e.key==="Escape"){resetSelection();return;}
   if(e.key==="Enter"&&selection.length>=CONFIG.minWord){e.preventDefault();void submitWord();}
 });
+$("start-game").addEventListener("click",start);
+$("start-dialog").addEventListener("cancel",e=>e.preventDefault());
 $("restart").addEventListener("click",start);$("again").addEventListener("click",start);
 async function load(){
   try{
@@ -205,8 +210,10 @@ async function load(){
     for(const word of commonText.toUpperCase().split(/\s+/))if(/^[A-Z]{3,8}$/.test(word)&&dictionary.has(word))generationWords.add(word);
     if(dictionary.size<152637||generationWords.size<17000)throw Error("Incomplete dictionary");
     generationTrie=buildGenerationTrie(generationWords);
-    ready=true;start();
-  }catch(error){status("Could not load the dictionary. Reload this page to try again.");console.error(error);}
+    ready=true;controls();$("start-status").textContent="Ready when you are. The timer starts when you press Start Game.";status("Press Start Game to begin.");$("start-game").focus();
+  }catch(error){const message="Could not load the dictionary. Reload this page to try again.";status(message);$("start-status").textContent=message;console.error(error);}
 }
+render(false);paintClock();controls();
+$("start-dialog").showModal();
 setInterval(tickClock,100);
 void load();

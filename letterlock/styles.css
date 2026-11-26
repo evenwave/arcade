@@ -21,3 +21,16 @@
 .word-timer[data-phase="stopped"]{--timer-color:#8d98a9}
 @keyframes timer-pulse{0%,100%{opacity:1;text-shadow:0 0 10px #ff7e8e90}50%{opacity:.68;text-shadow:none}}
 @media(prefers-reduced-motion:reduce){.word-timer[data-phase="urgent"] #timer-value{animation:none!important}}
+
+/* Modal start instructions: keep the board empty and the clock stopped until Start. */
+.start-dialog{width:min(92vw,480px);max-height:90vh;max-height:90dvh;overflow:auto;padding:0;border:1px solid #687386;border-radius:16px;background:#1b2532f2;color:#f2f3f7;box-shadow:0 20px 70px #0009}
+.start-dialog::backdrop{background:#0d1420b8;backdrop-filter:blur(2px)}
+.start-content{padding:clamp(16px,4vw,26px);text-align:center}
+.start-kicker{font-size:.7rem;letter-spacing:.1em;color:#a9b5c5}
+.start-content h2{font-size:clamp(1.8rem,6vw,2.4rem);margin:8px 0 0;color:var(--accent)}
+.start-content p{font-size:.88rem;margin:8px 0}
+.start-rules{text-align:left;font-size:.88rem;line-height:1.5;color:#d3dce9;padding-left:1.25rem;margin:16px 0}
+.start-rules li+li{margin-top:8px}
+#start-game{width:100%;padding:12px 18px;background:var(--accent);color:#32291b;font-size:1.05rem}
+#start-status{min-height:2.6em;color:#b5bfce;font-size:.78rem}
+.start-back{font-size:.8rem}

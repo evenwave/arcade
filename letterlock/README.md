@@ -1,4 +1,4 @@
-# Letterlock — Prototype 08
+# Letterlock — Prototype 09
 Standalone word puzzle for Evenwave's Arcade.
 
 - index.html: markup; styles.css: presentation; engine.js: pure game rules; game.js: browser controls and animations.
@@ -7,8 +7,9 @@ Standalone word puzzle for Evenwave's Arcade.
 - Letter weights approximate Scrabble's English distribution. On 40% of eligible non-terminal spawn batches, eight weighted random candidates are evaluated using a prefix trie and bounded eight-neighbor DFS; the best candidate favors distinct longer words involving new tiles. The other 60% are weighted random. Terminal spawns use random letters because the round ends. No hints or automatic selection.
 - Starting layout embeds two different familiar 5–6 letter words on disjoint randomly routed paths, then fills the remaining starting positions randomly (32 total).
 - Shift with arrow keys or buttons; drag to submit, click adjacent letters then submit or press Enter; typed words disabled. Board swipes are reserved for word selection.
-- Each valid shift adds four letters, prioritizing alternating zipper lanes, then other opposite-edge slots, then any empty cells. No colored obstacles.
+- Each valid shift adds one letter, prioritizing alternating zipper lanes, then other opposite-edge slots, then any empty cells. No colored obstacles.
 - Only manually submitted words score. They clear in place without collapsing the board. Four new letters appear: two in cleared word cells and two in vacant perimeter cells where possible, with fallback to other vacant cells. Unrecognized submissions clear the selection but do not alter the board, score, or countdown. Filling the board immediately ends the round. Scoring for lengths 3–12 is 0/100/300/900/2500/7500/22500/67500/200000/600000. Three-letter words reset the timer but award no points. Words may follow any eight-neighbor path without reusing a tile.
-- Scores are stored locally using a separate letterlock-best-v8 key.
-- Each round starts with a 25-second countdown. Valid words reset it, as do timeouts (which spawn four letters in random vacant spaces without removing existing tiles). Successful shifts cost four letters but do not reset the clock. No-op shifts and invalid submissions also do not reset the clock. All action animations and generation pause the clock. The timer stays green until 10 seconds, then turns red and gently pulses, with reduced-motion support. The invalid-word counter is removed. A timeout preserves the selected path but cancels any active pointer gesture so an incomplete drag cannot accidentally submit.
+- Scores are stored locally using a separate letterlock-best-v9 key.
+- On page load, a modal explains the rules while the dictionary loads. The board is empty and the timer and gameplay controls are inactive until Start Game is pressed. New game and Play again explicitly begin fresh rounds.
+- Each round starts with a 25-second countdown. Valid words reset it, as do timeouts (which spawn four letters in random vacant spaces without removing existing tiles). Successful shifts cost one letter but do not reset the clock. No-op shifts and invalid submissions also do not reset the clock. All action animations and generation pause the clock. The timer stays green until 10 seconds, then turns red and gently pulses, with reduced-motion support. The invalid-word counter is removed. A timeout preserves the selected path but cancels any active pointer gesture so an incomplete drag cannot accidentally submit.
 - Click a selected tile to remove it and every later tile from the path; click the sole selected tile to clear it. Drag backtracking continues to undo the last step without submitting.

@@ -4,6 +4,7 @@ const CONFIG = {
   "size": 8,
   "startingLetters": 32,
   "incomingLetters": 4,
+  "shiftLetters": 1,
   "minWord": 3,
   "maxWord": 12,
   "letterWeights": {
@@ -75,9 +76,9 @@ function entrySlots(grid,dir,parity){const n=grid.length,out=[];for(let i=parity
 
 function emptySlots(grid){const out=[];for(let r=0;r<grid.length;r++)for(let c=0;c<grid.length;c++)if(!grid[r][c])out.push([r,c]);return out;}
 
-function selectSlots(grid,groups,rng=Math.random){const selected=[],seen=new Set();for(const {cells,limit} of groups){let taken=0;for(const [r,c] of shuffle(cells,rng)){if(selected.length>=CONFIG.incomingLetters||taken>=limit)break;const key=r*grid.length+c;if(grid[r]?.[c]!==null||seen.has(key))continue;seen.add(key);selected.push({r,c,kind:"letter"});taken++;}}return selected;}
+function selectSlots(grid,groups,rng=Math.random,maxLetters=CONFIG.incomingLetters){const selected=[],seen=new Set();for(const {cells,limit} of groups){let taken=0;for(const [r,c] of shuffle(cells,rng)){if(selected.length>=maxLetters||taken>=limit)break;const key=r*grid.length+c;if(grid[r]?.[c]!==null||seen.has(key))continue;seen.add(key);selected.push({r,c,kind:"letter"});taken++;}}return selected;}
 
-function spawnPlan(grid,dir,parity,rng=Math.random){return selectSlots(grid,[{cells:entrySlots(grid,dir,parity),limit:4},{cells:entrySlots(grid,dir,1-parity),limit:4},{cells:emptySlots(grid),limit:4}],rng);}
+function spawnPlan(grid,dir,parity,rng=Math.random){const limit=CONFIG.shiftLetters;return selectSlots(grid,[{cells:entrySlots(grid,dir,parity),limit},{cells:entrySlots(grid,dir,1-parity),limit},{cells:emptySlots(grid),limit}],rng,limit);}
 
 function wordSpawnPlan(grid,clearedPath,rng=Math.random){const n=grid.length,empty=emptySlots(grid),perimeter=empty.filter(([r,c])=>r===0||c===0||r===n-1||c===n-1),outside=perimeter.filter(([r,c])=>!clearedPath.some(p=>p[0]===r&&p[1]===c));return selectSlots(grid,[{cells:clearedPath,limit:2},{cells:outside,limit:2},{cells:perimeter,limit:4},{cells:empty,limit:4}],rng);}
 
