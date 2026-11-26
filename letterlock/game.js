@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id);
 const boardEl=$("board"), layer=$("tiles"), input=$("word-input");
 const nodes=new Map(), dictionary=new Set(), generationWords=new Set();
 let generationTrie;
-const storageKey="letterlock-best-v12";
+const storageKey="letterlock-best-v11";
 const arrows={up:"↑",down:"↓",left:"←",right:"→"};
 let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, timeouts=0, longest="", parity=0, busy=false, ended=false, ready=false, active=false, selection=[], gesture=null;
 try{best=Math.max(0,Number(localStorage.getItem(storageKey))||0);}catch{}
@@ -33,7 +33,7 @@ function paintClock(){
   const now=performance.now(),ms=clockRemaining(clock,now),seconds=Math.ceil(ms/1000);
   $("elapsed-time").textContent=formatElapsed(roundElapsed(roundClock,now));
   $("difficulty-phase").textContent="Phase "+(CONFIG.difficultyStages.findIndex(s=>s.duration===clock.duration)+1)+" / "+CONFIG.difficultyStages.length;
-  const phase=!active||ended?"stopped":timerPhase(ms,clock.duration);
+  const phase=!active||ended?"stopped":timerPhase(ms);
   $("word-timer").dataset.phase=phase;
   $("timer-value").textContent=String(seconds).padStart(2,"0")+"s";
   $("timer-fill").style.width=(ms/clock.duration*100)+"%";

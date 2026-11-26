@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#151c28">
   <title>Letterlock | Evenwave's Arcade</title>
-  <link rel="stylesheet" href="styles.css?v=12">
-  <script src="engine.js?v=12" defer></script>
-  <script src="game.js?v=12" defer></script>
+  <link rel="stylesheet" href="styles.css?v=11.1">
+  <script src="engine.js?v=11.1" defer></script>
+  <script src="game.js?v=11.1" defer></script>
 </head>
 <body>
 <main class="game">
   <header>
-    <div class="topline"><a href="../">← Arcade</a><span>ARCADE / PROTOTYPE 12</span></div>
+    <div class="topline"><a href="../">← Arcade</a><span>ARCADE / PROTOTYPE 11</span></div>
     <h1>Letter<span>lock</span></h1>
     <p>Find long words. Make every shift count.</p>
   </header>
@@ -24,7 +24,7 @@
   </section>
   <div class="play-layout">
   <section class="playfield" aria-label="Game area">
-    <div class="round-meta"><span id="difficulty-phase">Phase 1 / 5</span><span>Round time: <strong id="elapsed-time">00:00</strong></span></div>
+    <div class="round-meta"><span id="difficulty-phase">Phase 1 / 4</span><span>Round time: <strong id="elapsed-time">00:00</strong></span></div>
     <div class="word-timer" id="word-timer" data-phase="stopped">
       <div class="timer-head"><span>Time to find a word</span><strong id="timer-value" role="timer" aria-live="off">30s</strong></div>
       <div class="timer-meter" id="timer-meter" role="progressbar" aria-label="Seconds remaining" aria-valuemin="0" aria-valuemax="30" aria-valuenow="30"><div id="timer-fill"></div></div>
@@ -77,7 +77,7 @@
     <p>Each valid shift adds two new letters, prioritizing alternating lanes on the opposite edge, then other vacant positions along that edge, then vacant cells elsewhere. An attempted shift that moves nothing costs nothing.</p>
     <p>Drag along touching letters to submit a word, or click each letter in order and press Space, Enter, or Submit. Complete each selection within five seconds of selecting the first letter, or it clears automatically. Connect horizontally, vertically, diagonally, or turn in any direction. Each tile can be used only once per word. Typing words is disabled. Click a selected letter again to deselect it and any letters after it. Drag backward to undo the last selection. Escape, ×, or an empty tile clears the selection without a penalty.</p>
     <p>Every valid word of three to twelve letters introduces four new letters. Three-letter words earn no points but reset the timer; four-letter words keep occupancy neutral. Longer words earn increasingly larger rewards. A valid word clears its selected letters, then two new letters enter the cleared spaces and two enter vacant perimeter spaces. If needed, remaining letters fill other empty cells. An unrecognized word clears nothing, adds no letters and does not reset the countdown. All other tiles stay in place.</p>
-    <p>The countdown starts at 30 seconds, drops to 25 seconds after 1:30 of active play, to 20 seconds after 2:30, to 15 seconds after 3:30, and to 10 seconds after 5:00. Shorter countdowns apply on the next valid word or timeout; the current countdown is not shortened. Shifting adds two letters without resetting the timer. If time runs out, four new letters enter random vacant cells and a fresh countdown begins. The timer turns red and gently pulses at ten seconds remaining in the first three phases, and at five seconds remaining in the final two phases. Unrecognized words do not reset the timer. Both the countdown and elapsed gameplay time pause during animations and letter generation.</p>
+    <p>The countdown starts at 30 seconds, drops to 25 seconds after 1:30 of active play to 20 seconds after 2:30, and to 15 seconds after 5:00. Shorter countdowns apply on the next valid word or timeout; the current countdown is not shortened. Shifting adds two letters without resetting the timer. If time runs out, four new letters enter random vacant cells and a fresh countdown begins. The timer is green until the last ten seconds, when it turns red and gently pulses. Unrecognized words do not reset the timer. Both the countdown and elapsed gameplay time pause during animations and letter generation.</p>
     <div class="mini-stats"><div>Longest word <strong id="longest">—</strong></div><div>Timeouts <strong id="timeouts">0</strong></div></div>
     
     <p class="fine">No overall time or move limit. The round ends immediately when all 64 cells are occupied, even if words remain. If fewer than four empty cells exist, the new letters fill them all. The prototype uses an expanded local dictionary of 152,637 English words (3–12 letters). Some legitimate words may still be missing. About 40% of eligible spawn batches favor opportunities for familiar five- to eight-letter words; the other 60% use weighted randomness. The starting board contains 32 letters, including at least two familiar words of five or six letters. Your personal best is saved in this browser.</p>
@@ -86,12 +86,12 @@
 </main>
 <dialog id="start-dialog" class="start-dialog" aria-labelledby="start-title" aria-describedby="start-intro">
   <div class="start-content">
-    <span class="start-kicker">LETTERLOCK / PROTOTYPE 12</span>
+    <span class="start-kicker">LETTERLOCK / PROTOTYPE 11</span>
     <h2 id="start-title">Ready to play?</h2>
     <p id="start-intro">Find long words. Make every shift count.</p>
     <ul class="start-rules">
       <li>Connect 3–12 touching letters in any direction, including diagonals. Drag to submit, or click letters and press Space, Enter, or Submit. Complete your connection within five seconds or it clears.</li>
-      <li>Valid words clear their tiles, add four new letters and reset the timer (30 seconds initially, then 25, 20, 15 and 10 as the round progresses). Three letters buy time; four maintain space; longer words earn big points and free space.</li>
+      <li>Valid words clear their tiles, add four new letters and reset the timer (30 seconds initially, then 25, 20 and 15 as the round progresses). Three letters buy time; four maintain space; longer words earn big points and free space.</li>
       <li>Shift with WASD, the arrow keys, or direction buttons. Each successful shift adds two letters and does not reset the timer.</li>
       <li>If time runs out, four letters appear. Unrecognized words add nothing and do not reset the timer.</li>
       <li>Keep the board from filling up. Find the longest words you can!</li>
