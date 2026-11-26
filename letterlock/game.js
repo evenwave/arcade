@@ -4,11 +4,12 @@ const $=id=>document.getElementById(id);
 const boardEl=$("board"), layer=$("tiles"), input=$("word-input");
 const nodes=new Map(), dictionary=new Set(), generationWords=new Set();
 let generationTrie;
-const storageKey="letterlock-best-v9";
+const storageKey="letterlock-best-v10";
 const arrows={up:"↑",down:"↓",left:"←",right:"→"};
 let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, timeouts=0, longest="", parity=0, busy=false, ended=false, ready=false, active=false, selection=[], gesture=null;
 try{best=Math.max(0,Number(localStorage.getItem(storageKey))||0);}catch{}
-const clock=newWordClock();
+const clock=newWordClock(),roundClock=newRoundClock();
+let notificationHandle=null;
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,matchMedia("(prefers-reduced-motion: reduce)").matches?0:ms));
 const format=n=>n.toLocaleString();
 const status=t=>{$("status").textContent=t;};
@@ -18,29 +19,47 @@ function addLetters(plan){
   plan.forEach(({r,c},i)=>{grid[r][c]=makeLetter(letters[i]);});
 }
 for(let i=0;i<CONFIG.size**2;i++){const cell=document.createElement("div");cell.className="cell";$("cells").append(cell);}
+function hideDifficulty(){
+  if(notificationHandle!==null){clearTimeout(notificationHandle);notificationHandle=null;}
+  $("difficulty-notice").hidden=true;
+}
+function announceDifficulty(duration){
+  hideDifficulty();
+  $("difficulty-notice").textContent="Difficulty increased to "+duration/1000+" seconds";
+  $("difficulty-notice").hidden=false;
+  notificationHandle=setTimeout(()=>{$("difficulty-notice").hidden=true;notificationHandle=null;},3000);
+}
 function paintClock(){
-  const ms=clockRemaining(clock,performance.now()),seconds=Math.ceil(ms/1000);
+  const now=performance.now(),ms=clockRemaining(clock,now),seconds=Math.ceil(ms/1000);
+  $("elapsed-time").textContent=formatElapsed(roundElapsed(roundClock,now));
+  $("difficulty-phase").textContent="Phase "+(CONFIG.difficultyStages.findIndex(s=>s.duration===clock.duration)+1)+" / "+CONFIG.difficultyStages.length;
   const phase=!active||ended?"stopped":timerPhase(ms);
   $("word-timer").dataset.phase=phase;
   $("timer-value").textContent=String(seconds).padStart(2,"0")+"s";
-  $("timer-fill").style.width=(ms/CONFIG.wordTimeMs*100)+"%";
+  $("timer-fill").style.width=(ms/clock.duration*100)+"%";
   $("timer-meter").setAttribute("aria-valuenow",seconds);
+  $("timer-meter").setAttribute("aria-valuemax",clock.duration/1000);
 }
 function beginAction(){
   if(!ready||!active||busy||ended)return false;
   const now=performance.now();
   if(clockRemaining(clock,now)<=0){void timeout();return false;}
-  pauseClock(clock,now);busy=true;controls();paintClock();return true;
+  pauseClock(clock,now);pauseRound(roundClock,now);busy=true;controls();paintClock();return true;
 }
 function finishAction(reset=false){
-  if(reset&&!ended)resetClock(clock);
+  const now=performance.now();
+  if(reset&&!ended){
+    const duration=difficultyAt(roundElapsed(roundClock,now)).duration,previous=clock.duration;
+    resetClock(clock,duration);
+    if(duration!==previous)announceDifficulty(duration);
+  }
   busy=false;
-  if(!ended)resumeClock(clock,performance.now());
+  if(!ended){resumeClock(clock,now);resumeRound(roundClock,now);}
   paintClock();controls();
 }
 async function timeout(){
   if(!ready||!active||busy||ended||clockRemaining(clock,performance.now())>0)return;
-  pauseClock(clock,performance.now());busy=true;gesture=null;controls();paintClock();
+  const now=performance.now();pauseClock(clock,now);pauseRound(roundClock,now);busy=true;gesture=null;controls();paintClock();
   try{
     timeouts++;const plan=invalidSpawnPlan(grid);addLetters(plan);render();
     status("Time expired · "+plan.length+" penalty letters added.");
@@ -87,6 +106,7 @@ function paintSelection(){
 }
 function preview(){
   const n=input.value.length;
+  document.querySelectorAll("[data-word-length]").forEach(row=>row.classList.toggle("current",Number(row.dataset.wordLength)===n));
   $("word-preview").textContent=Object.hasOwn(CONFIG.points,n)?n+" letters · "+format(CONFIG.points[n])+" possible points":"3–12 letters · Select touching tiles";
 }
 function setSelection(path){selection=path||[];input.value=selection.length?wordAt(grid,selection):"";paintSelection();preview();controls();}
@@ -94,14 +114,16 @@ function resetSelection(){gesture=null;setSelection([]);}
 function updateBest(){if(score<=best)return;best=score;try{localStorage.setItem(storageKey,String(best));}catch{}}
 function start(){
   if(!ready||busy)return;
+  hideDifficulty();resetRound(roundClock);resetClock(clock);
   active=true;ended=false;nextId=score=moves=words=timeouts=parity=0;longest="";grid=blank();layer.replaceChildren();nodes.clear();resetSelection();
   for(const {r,c,letter} of startingLayout(generationWords))grid[r][c]=makeLetter(letter);
   if($("start-dialog").open)$("start-dialog").close();
-  $("over").hidden=true;$("gravity").textContent="Choose a direction";status("Find a word before the timer expires. Aim for five letters or longer.");render(false);resetClock(clock);resumeClock(clock,performance.now());paintClock();controls();
+  $("over").hidden=true;$("gravity").textContent="Choose a direction";status("Find a word before the timer expires. Aim for five letters or longer.");render(false);const now=performance.now();resumeClock(clock,now);resumeRound(roundClock,now);paintClock();controls();
 }
 function checkEnd(){
   if(!gameOver(grid))return;
-  ended=true;pauseClock(clock,performance.now());paintClock();resetSelection();$("summary").textContent=format(score)+" points · "+moves+" shifts · "+words+" words · "+timeouts+" timeouts";
+  ended=true;const now=performance.now();pauseClock(clock,now);pauseRound(roundClock,now);hideDifficulty();paintClock();resetSelection();$("summary").textContent=format(score)+" points · "+moves+" shifts · "+words+" words · "+timeouts+" timeouts";
+  $("round-duration").textContent="Round time: "+formatElapsed(roundElapsed(roundClock,now));
   $("round-longest").textContent="Longest word: "+(longest||"—");
   $("over").hidden=false;status("The board is full. Round over.");controls();$("again").focus();
 }

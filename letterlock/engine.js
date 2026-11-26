@@ -4,7 +4,7 @@ const CONFIG = {
   "size": 8,
   "startingLetters": 32,
   "incomingLetters": 4,
-  "shiftLetters": 1,
+  "shiftLetters": 2,
   "minWord": 3,
   "maxWord": 12,
   "letterWeights": {
@@ -54,7 +54,8 @@ const CONFIG = {
   "assistedCandidates": 8,
   "searchBudget": 40000,
   "minOpportunityLength": 5,
-  "wordTimeMs": 25000,
+  "wordTimeMs": 30000,
+  "difficultyStages": [{"at":0,"duration":30000},{"at":90000,"duration":25000},{"at":150000,"duration":20000}],
   "maxOpportunityLength": 8
 };
 const DIRECTIONS = ["up","down","left","right"];
@@ -159,7 +160,7 @@ function startingLayout(dictionary,rng=Math.random){
 }
 
 // Countdown state uses a monotonic timestamp supplied by the browser.
-function newWordClock(){return {remaining:CONFIG.wordTimeMs,deadline:null};}
+function newWordClock(){return {remaining:CONFIG.wordTimeMs,duration:CONFIG.wordTimeMs,deadline:null};}
 
 function clockRemaining(clock,now){return clock.deadline===null?clock.remaining:Math.max(0,clock.deadline-now);}
 
@@ -167,7 +168,16 @@ function pauseClock(clock,now){clock.remaining=clockRemaining(clock,now);clock.d
 
 function resumeClock(clock,now){if(clock.deadline===null)clock.deadline=now+clock.remaining;}
 
-function resetClock(clock){clock.remaining=CONFIG.wordTimeMs;clock.deadline=null;}
+function resetClock(clock,duration=CONFIG.wordTimeMs){clock.remaining=clock.duration=duration;clock.deadline=null;}
+
+// Elapsed active play excludes the start screen and action processing.
+function newRoundClock(){return {elapsed:0,since:null};}
+function roundElapsed(clock,now){return clock.elapsed+(clock.since===null?0:Math.max(0,now-clock.since));}
+function pauseRound(clock,now){clock.elapsed=roundElapsed(clock,now);clock.since=null;}
+function resumeRound(clock,now){if(clock.since===null)clock.since=now;}
+function resetRound(clock){clock.elapsed=0;clock.since=null;}
+function difficultyAt(elapsed){let phase=0;for(let i=1;i<CONFIG.difficultyStages.length;i++)if(elapsed>=CONFIG.difficultyStages[i].at)phase=i;return {phase:phase+1,duration:CONFIG.difficultyStages[phase].duration};}
+function formatElapsed(ms){const seconds=Math.floor(ms/1000);return String(Math.floor(seconds/60)).padStart(2,"0")+":"+String(seconds%60).padStart(2,"0");}
 
 function timerPhase(ms){return ms<=10000?"urgent":"normal";}
 
