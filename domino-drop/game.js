@@ -5,7 +5,7 @@ const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8]};
 const boardEl=$("board"),queueEl=$("queue"),overlay=$("overlay"),startBtn=$("start");
 const grid=Array.from({length:E.W*E.H},()=>{const n=document.createElement("div");n.className="cell";boardEl.append(n);return n;});
 let board=E.empty(),active=null,queue=[],score=0,placed=0,best=0,wave=0,state="idle",resumeState="falling",fall=0,ground=0,phaseTime=0,last=0,match=null;
-const held=new Map(),KEY="domino-drop-best-v1";
+const held=new Map(),KEY="domino-drop-best-v2";
 try{best=Math.max(0,Number(localStorage.getItem(KEY))||0);}catch{}
 $("best").textContent=best.toLocaleString();
 function tileEl(t,extra=""){const el=document.createElement("div");el.className="tile "+t.color+" "+extra;el.setAttribute("aria-label",t.color+" "+t.pips);for(const pos of PIPS[t.pips]){const dot=document.createElement("i");dot.className="pip";dot.style.gridColumn=pos%3+1;dot.style.gridRow=Math.floor(pos/3)+1;el.append(dot);}return el;}
@@ -13,10 +13,10 @@ function renderQueue(){queueEl.replaceChildren(...queue.map((pair,i)=>{const el=
 function render(){
  const ghosts=active?E.ghost(board,active):[],live=active?E.cells(active):[];
  const marked=new Set(match?match.cells.map(c=>c.y*E.W+c.x):[]);
- const doubles=new Set(match?match.groups.filter(g=>g.kind==="double").flatMap(g=>g.cells.map(c=>c.y*E.W+c.x)):[]);
+ const megas=new Set(match?match.groups.filter(g=>g.kind==="mega").flatMap(g=>g.cells.map(c=>c.y*E.W+c.x)):[]);
  const maths=new Set(match?match.groups.filter(g=>g.kind==="math").flatMap(g=>g.cells.map(c=>c.y*E.W+c.x)):[]);
  for(let i=0;i<grid.length;i++){const x=i%E.W,y=Math.floor(i/E.W),n=grid[i];n.replaceChildren();const t=board[y][x],a=live.find(c=>c.x===x&&c.y===y),g=ghosts.find(c=>c.x===x&&c.y===y);
-  if(t)n.append(tileEl(t,marked.has(i)?"flash "+(doubles.has(i)?"double":maths.has(i)?"math":""):""));
+  if(t)n.append(tileEl(t,marked.has(i)?"flash "+(megas.has(i)?"mega":maths.has(i)?"math":""):""));
   else if(a)n.append(tileEl(a.t,"active "+(a.t===active.tiles[0]?"first":"")));
   else if(g)n.append(tileEl(g.t,"ghost"));
  }
@@ -28,8 +28,8 @@ function show(title,body,button){$("overlay-title").textContent=title;$("overlay
 function save(){if(score>best){best=score;try{localStorage.setItem(KEY,String(best));}catch{}}}
 function end(){active=null;state="over";clearHeld();$("pause").disabled=true;save();render();show("Game over",score.toLocaleString()+" points · "+placed+" dominoes placed","Play again");feedback("Board full — round over.");}
 function spawn(){wave=0;match=null;active=E.spawn(queue.shift());queue.push(E.pair());renderQueue();fall=0;ground=0;if(!E.fits(board,active)){end();return;}state="falling";render();}
-function start(){board=E.empty();queue=[E.pair(),E.pair(),E.pair(),E.pair()];score=0;placed=0;match=null;clearHeld();overlay.hidden=true;$("pause").disabled=false;$("pause").textContent="Pause";feedback("Match colors or make 10.");spawn();}
-function nextWave(){match=E.findMatches(board);if(!match.cells.length){match=null;spawn();return;}wave++;const gain=match.base*wave;score+=gain;save();const parts=[];if(wave>1)parts.push("CASCADE ×"+wave);if(match.count>1)parts.push(match.count+"-MATCH COMBO");if(match.double)parts.push("DOUBLE MATCH");else if(match.math)parts.push("10!");else parts.push("COLOR MATCH");feedback(parts.join(" · ")+"  +"+gain.toLocaleString());state="clearing";phaseTime=300;render();}
+function start(){board=E.empty();queue=[E.pair(),E.pair(),E.pair(),E.pair()];score=0;placed=0;match=null;clearHeld();overlay.hidden=true;$("pause").disabled=false;$("pause").textContent="Pause";feedback("Make 10 or line up four fives.");spawn();}
+function nextWave(){match=E.findMatches(board);if(!match.cells.length){match=null;spawn();return;}wave++;const gain=match.base*wave;score+=gain;save();const parts=[];if(wave>1)parts.push("CASCADE ×"+wave);if(match.count>1)parts.push(match.count+"-MATCH COMBO");if(match.mega)parts.push("MEGA MATCH!");if(match.math)parts.push("10!");feedback(parts.join(" · ")+"  +"+gain.toLocaleString());state="clearing";phaseTime=300;render();}
 function land(){board=E.lock(board,active);active=null;placed++;clearHeld();state="settling";phaseTime=110;render();}
 function grounded(){return active&&E.move(board,active,0,1)===active;}
 function act(action){if(state!=="falling"||!active)return;const prev=active;if(action==="left")active=E.move(board,active,-1,0);if(action==="right")active=E.move(board,active,1,0);if(action==="rotate")active=E.rotate(board,active);if(action==="down"){active=E.move(board,active,0,1);fall=0;}if(active!==prev){if(!grounded())ground=0;render();}}
