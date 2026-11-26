@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id);
 const boardEl=$("board"), layer=$("tiles"), input=$("word-input");
 const nodes=new Map(), dictionary=new Set(), generationWords=new Set();
 let generationTrie;
-const storageKey="letterlock-best-v11";
+const storageKey="letterlock-best-v12";
 const arrows={up:"↑",down:"↓",left:"←",right:"→"};
 let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, timeouts=0, longest="", parity=0, busy=false, ended=false, ready=false, active=false, selection=[], gesture=null;
 try{best=Math.max(0,Number(localStorage.getItem(storageKey))||0);}catch{}
@@ -33,7 +33,7 @@ function paintClock(){
   const now=performance.now(),ms=clockRemaining(clock,now),seconds=Math.ceil(ms/1000);
   $("elapsed-time").textContent=formatElapsed(roundElapsed(roundClock,now));
   $("difficulty-phase").textContent="Phase "+(CONFIG.difficultyStages.findIndex(s=>s.duration===clock.duration)+1)+" / "+CONFIG.difficultyStages.length;
-  const phase=!active||ended?"stopped":timerPhase(ms);
+  const phase=!active||ended?"stopped":timerPhase(ms,clock.duration);
   $("word-timer").dataset.phase=phase;
   $("timer-value").textContent=String(seconds).padStart(2,"0")+"s";
   $("timer-fill").style.width=(ms/clock.duration*100)+"%";
@@ -148,7 +148,7 @@ function checkEnd(){
   ended=true;const now=performance.now();pauseClock(clock,now);pauseRound(roundClock,now);hideDifficulty();paintClock();resetSelection();$("summary").textContent=format(score)+" points · "+moves+" shifts · "+words+" words · "+timeouts+" timeouts";
   $("round-duration").textContent="Round time: "+formatElapsed(roundElapsed(roundClock,now));
   $("round-longest").textContent="Longest word: "+(longest||"—");
-  $("over").hidden=false;status("The board is full. Round over.");controls();$("again").focus();
+  $("over").hidden=false;status("The board is full. Round over.");controls();$("game-over-title").focus();
 }
 async function flash(ids){
   for(const id of ids)nodes.get(id)?.classList.add("matched");
@@ -239,6 +239,8 @@ document.querySelectorAll("[data-dir]").forEach(b=>b.addEventListener("click",()
 document.addEventListener("keydown",e=>{
   if(e.altKey||e.ctrlKey||e.metaKey||e.isComposing)return;
   if(!active)return;
+  // Late word-submission keys must never activate a restart button after gridlock.
+  if(ended){if(e.key==="Enter"||e.key===" ")e.preventDefault();return;}
   const dir=directionForKey(e.key);
   if(dir){e.preventDefault();if(!e.repeat)void shift(dir);return;}
   if(e.key===" "&&!ended)e.preventDefault();
@@ -246,6 +248,7 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){resetSelection();return;}
   if((e.key==="Enter"||e.key===" ")&&selection.length>=CONFIG.minWord){e.preventDefault();if(!e.repeat)void submitWord();}
 });
+document.addEventListener("keyup",e=>{if(active&&ended&&(e.key==="Enter"||e.key===" "))e.preventDefault();});
 $("start-game").addEventListener("click",start);
 $("start-dialog").addEventListener("cancel",e=>e.preventDefault());
 $("restart").addEventListener("click",start);$("again").addEventListener("click",start);
