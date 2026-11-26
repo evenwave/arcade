@@ -5,7 +5,7 @@ const CONFIG = {
   "startingLetters": 24,
   "incomingLetters": 4,
   "minWord": 3,
-  "maxWord": 8,
+  "maxWord": 12,
   "letterWeights": {
     "A": 9,
     "B": 2,
@@ -35,12 +35,16 @@ const CONFIG = {
     "Z": 1
   },
   "points": {
-    "3": 10,
-    "4": 50,
+    "3": 0,
+    "4": 100,
     "5": 300,
-    "6": 750,
-    "7": 2000,
-    "8": 5000
+    "6": 900,
+    "7": 2500,
+    "8": 7500,
+    "9": 22500,
+    "10": 67500,
+    "11": 200000,
+    "12": 600000
   },
   "slideMs": 165,
   "clearMs": 180,
@@ -49,7 +53,8 @@ const CONFIG = {
   "assistedCandidates": 8,
   "searchBudget": 40000,
   "minOpportunityLength": 5,
-  "wordTimeMs": 45000
+  "wordTimeMs": 30000,
+  "maxOpportunityLength": 8
 };
 const DIRECTIONS = ["up","down","left","right"];
 function blank(){return Array.from({length:CONFIG.size},()=>Array(CONFIG.size).fill(null));}
@@ -91,7 +96,7 @@ function clearWord(grid,path,dictionary){if(!path||path.length<CONFIG.minWord||p
 function gameOver(grid){return emptySlots(grid).length===0;}
 
 // Context-aware generation: evaluate only distinct words that use at least one newly placed tile.
-function buildGenerationTrie(words){const root={children:Object.create(null),word:null};for(const word of words){if(word.length<CONFIG.minOpportunityLength||word.length>CONFIG.maxWord)continue;let node=root;for(const c of word){node.children[c]??={children:Object.create(null),word:null};node=node.children[c];}node.word=word;}return root;}
+function buildGenerationTrie(words){const root={children:Object.create(null),word:null};for(const word of words){if(word.length<CONFIG.minOpportunityLength||word.length>CONFIG.maxOpportunityLength)continue;let node=root;for(const c of word){node.children[c]??={children:Object.create(null),word:null};node=node.children[c];}node.word=word;}return root;}
 
 function opportunityWords(grid,trie,newCells=null,budget=CONFIG.searchBudget){
   const n=grid.length,used=new Uint8Array(n*n),fresh=new Uint8Array(n*n),found=new Set();
@@ -103,7 +108,7 @@ function opportunityWords(grid,trie,newCells=null,budget=CONFIG.searchBudget){
     const child=node.children[t.letter];if(!child)return;
     visits++;used[i]=1;const touches=touchesNew||!!fresh[i];
     if(child.word&&touches)found.add(child.word);
-    if(depth<CONFIG.maxWord)for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++)if(dr||dc)visit(r+dr,c+dc,child,depth+1,touches);
+    if(depth<CONFIG.maxOpportunityLength)for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++)if(dr||dc)visit(r+dr,c+dc,child,depth+1,touches);
     used[i]=0;
   }
   for(let r=0;r<n;r++)for(let c=0;c<n;c++)visit(r,c,trie,1,!newCells);

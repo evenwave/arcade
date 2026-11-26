@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id);
 const boardEl=$("board"), layer=$("tiles"), input=$("word-input");
 const nodes=new Map(), dictionary=new Set(), generationWords=new Set();
 let generationTrie;
-const storageKey="letterlock-best-v6";
+const storageKey="letterlock-best-v7";
 const arrows={up:"↑",down:"↓",left:"←",right:"→"};
 let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, timeouts=0, longest="", parity=0, busy=false, ended=false, ready=false, selection=[], gesture=null;
 try{best=Math.max(0,Number(localStorage.getItem(storageKey))||0);}catch{}
@@ -86,7 +86,7 @@ function paintSelection(){
 }
 function preview(){
   const n=input.value.length;
-  $("word-preview").textContent=CONFIG.points[n]?n+" letters · "+format(CONFIG.points[n])+" possible points":"3–8 letters · Select touching tiles";
+  $("word-preview").textContent=Object.hasOwn(CONFIG.points,n)?n+" letters · "+format(CONFIG.points[n])+" possible points":"3–12 letters · Select touching tiles";
 }
 function setSelection(path){selection=path||[];input.value=selection.length?wordAt(grid,selection):"";paintSelection();preview();controls();}
 function resetSelection(){gesture=null;setSelection([]);}
@@ -120,7 +120,7 @@ async function shift(dir){
     render();await wait(CONFIG.spawnMs);
     status(plan.length+" letter"+(plan.length===1?"":"s")+" added. Aim for a long word.");
     checkEnd();
-  }finally{finishAction(true);}
+  }finally{finishAction();}
 }
 async function submitWord(){
   if(!ready||busy||ended||selection.length<CONFIG.minWord)return;
@@ -197,12 +197,13 @@ document.addEventListener("keydown",e=>{
 $("restart").addEventListener("click",start);$("again").addEventListener("click",start);
 async function load(){
   try{
-    const [validation,common]=await Promise.all([fetch("enable-words.txt?v=4"),fetch("words.txt?v=1")]);
-    if(!validation.ok||!common.ok)throw Error("Dictionary unavailable");
-    const [validationText,commonText]=await Promise.all([validation.text(),common.text()]);
+    const [validation,common,longWords]=await Promise.all([fetch("enable-words.txt?v=4"),fetch("words.txt?v=1"),fetch("enable-long-words.txt?v=7")]);
+    if(!validation.ok||!common.ok||!longWords.ok)throw Error("Dictionary unavailable");
+    const [validationText,commonText,longText]=await Promise.all([validation.text(),common.text(),longWords.text()]);
     for(const word of validationText.toUpperCase().split(/\s+/))if(/^[A-Z]{3,8}$/.test(word))dictionary.add(word);
+    for(const word of longText.toUpperCase().split(/\s+/))if(/^[A-Z]{9,12}$/.test(word))dictionary.add(word);
     for(const word of commonText.toUpperCase().split(/\s+/))if(/^[A-Z]{3,8}$/.test(word)&&dictionary.has(word))generationWords.add(word);
-    if(dictionary.size<80000||generationWords.size<17000)throw Error("Incomplete dictionary");
+    if(dictionary.size<152637||generationWords.size<17000)throw Error("Incomplete dictionary");
     generationTrie=buildGenerationTrie(generationWords);
     ready=true;start();
   }catch(error){status("Could not load the dictionary. Reload this page to try again.");console.error(error);}
