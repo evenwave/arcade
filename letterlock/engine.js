@@ -3,7 +3,7 @@
 const CONFIG = {
   "size": 8,
   "startingLetters": 24,
-  "incomingLetters": 3,
+  "incomingLetters": 4,
   "minWord": 3,
   "maxWord": 8,
   "letterWeights": {
@@ -35,11 +35,11 @@ const CONFIG = {
     "Z": 1
   },
   "points": {
-    "3": 100,
-    "4": 250,
-    "5": 600,
-    "6": 1200,
-    "7": 2500,
+    "3": 10,
+    "4": 50,
+    "5": 300,
+    "6": 750,
+    "7": 2000,
     "8": 5000
   },
   "slideMs": 165,
@@ -63,7 +63,15 @@ function canShift(grid,dir){return changed(grid,slide(grid,dir));}
 
 function entrySlots(grid,dir,parity){const n=grid.length,out=[];for(let i=parity;i<n;i+=2){const [r,c]=dir==="right"?[i,0]:dir==="left"?[i,n-1]:dir==="down"?[0,i]:[n-1,i];if(!grid[r][c])out.push([r,c]);}return out;}
 
-function spawnPlan(grid,dir,parity,rng=Math.random){return shuffle(entrySlots(grid,dir,parity),rng).slice(0,CONFIG.incomingLetters).map(([r,c])=>({r,c,kind:"letter"}));}
+function emptySlots(grid){const out=[];for(let r=0;r<grid.length;r++)for(let c=0;c<grid.length;c++)if(!grid[r][c])out.push([r,c]);return out;}
+
+function selectSlots(grid,groups,rng=Math.random){const selected=[],seen=new Set();for(const {cells,limit} of groups){let taken=0;for(const [r,c] of shuffle(cells,rng)){if(selected.length>=CONFIG.incomingLetters||taken>=limit)break;const key=r*grid.length+c;if(grid[r]?.[c]!==null||seen.has(key))continue;seen.add(key);selected.push({r,c,kind:"letter"});taken++;}}return selected;}
+
+function spawnPlan(grid,dir,parity,rng=Math.random){return selectSlots(grid,[{cells:entrySlots(grid,dir,parity),limit:4},{cells:entrySlots(grid,dir,1-parity),limit:4},{cells:emptySlots(grid),limit:4}],rng);}
+
+function wordSpawnPlan(grid,clearedPath,rng=Math.random){const n=grid.length,empty=emptySlots(grid),perimeter=empty.filter(([r,c])=>r===0||c===0||r===n-1||c===n-1),outside=perimeter.filter(([r,c])=>!clearedPath.some(p=>p[0]===r&&p[1]===c));return selectSlots(grid,[{cells:clearedPath,limit:2},{cells:outside,limit:2},{cells:perimeter,limit:4},{cells:empty,limit:4}],rng);}
+
+function invalidSpawnPlan(grid,rng=Math.random){return selectSlots(grid,[{cells:emptySlots(grid),limit:4}],rng);}
 
 function same(a,b){return !!a&&!!b&&a[0]===b[0]&&a[1]===b[1];}
 
@@ -73,10 +81,6 @@ function extendPath(grid,path,at){if(!at||grid[at[0]]?.[at[1]]?.kind!=="letter")
 
 function wordAt(grid,path){return path.map(([r,c])=>grid[r][c].letter).join("");}
 
-function buildTrie(dictionary){const root={children:Object.create(null),word:false};for(const word of dictionary){if(word.length<CONFIG.minWord||word.length>CONFIG.maxWord)continue;let node=root;for(const c of word){node.children[c]??={children:Object.create(null),word:false};node=node.children[c];}node.word=true;}return root;}
-
-function findWord(grid,trie,target=null){if(target&&(target.length<CONFIG.minWord||target.length>CONFIG.maxWord))return null;const n=grid.length,used=new Uint8Array(n*n),path=[];function visit(r,c,node){const t=grid[r]?.[c],i=r*n+c;if(t?.kind!=="letter"||used[i])return null;if(target&&t.letter!==target[path.length])return null;const child=node.children[t.letter];if(!child)return null;used[i]=1;path.push([r,c]);let result=null;if(child.word&&(!target||path.length===target.length))result=path.slice();else if(path.length<CONFIG.maxWord&&(!target||path.length<target.length)){for(let dr=-1;dr<=1&&!result;dr++)for(let dc=-1;dc<=1&&!result;dc++)if(dr||dc)result=visit(r+dr,c+dc,child);}path.pop();used[i]=0;return result;}for(let r=0;r<n;r++)for(let c=0;c<n;c++){const result=visit(r,c,trie);if(result)return result;}return null;}
-
 function clearWord(grid,path,dictionary){if(!path||path.length<CONFIG.minWord||path.length>CONFIG.maxWord)return null;const seen=new Set();for(let i=0;i<path.length;i++){const [r,c]=path[i],t=grid[r]?.[c];if(t?.kind!=="letter"||seen.has(t.id)||(i&&!adjacent(path[i-1],path[i])))return null;seen.add(t.id);}const word=wordAt(grid,path);if(!dictionary.has(word))return null;return {word,points:CONFIG.points[word.length],grid:removeIds(grid,seen)};}
 
-function gameOver(grid,trie){return !DIRECTIONS.some(d=>canShift(grid,d))&&!findWord(grid,trie);}
+function gameOver(grid){return emptySlots(grid).length===0;}

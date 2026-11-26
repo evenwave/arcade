@@ -3,10 +3,9 @@
 const $=id=>document.getElementById(id);
 const boardEl=$("board"), layer=$("tiles"), input=$("word-input");
 const nodes=new Map(), dictionary=new Set();
-let trie;
-const storageKey="letterlock-best-v2";
+const storageKey="letterlock-best-v3";
 const arrows={up:"↑",down:"↓",left:"←",right:"→"};
-let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, longest="", parity=0, busy=false, ended=false, ready=false, selection=[], gesture=null;
+let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, misses=0, longest="", parity=0, busy=false, ended=false, ready=false, selection=[], gesture=null;
 try{best=Math.max(0,Number(localStorage.getItem(storageKey))||0);}catch{}
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,matchMedia("(prefers-reduced-motion: reduce)").matches?0:ms));
 const format=n=>n.toLocaleString();
@@ -16,7 +15,7 @@ for(let i=0;i<CONFIG.size**2;i++){const cell=document.createElement("div");cell.
 function stats(){
   const count=grid.flat().filter(Boolean).length, max=CONFIG.size**2;
   $("score").textContent=format(score);$("best").textContent=format(best);$("moves").textContent=format(moves);$("words").textContent=format(words);
-  $("longest").textContent=longest||"—";
+  $("longest").textContent=longest||"—";$("misses").textContent=format(misses);
   $("occupancy").textContent=count+" / "+max+" blocks";$("fill").style.width=(count/max*100)+"%";$("fill").style.background=count/max>.8?"#ee7988":count/max>.6?"#f1c66c":"var(--accent)";
   document.querySelector(".meter").setAttribute("aria-valuenow",count);
 }
@@ -37,7 +36,7 @@ function render(animateNew=true){
 function controls(){
   const disabled=!ready||busy||ended;
   document.querySelectorAll("[data-dir]").forEach(b=>b.disabled=disabled);
-  input.disabled=disabled;$("submit").disabled=disabled;$("clear").disabled=disabled;
+  input.disabled=disabled;$("submit").disabled=disabled||selection.length<CONFIG.minWord;$("clear").disabled=disabled;
   $("restart").disabled=!ready||busy;
 }
 function paintSelection(){
@@ -47,23 +46,23 @@ function paintSelection(){
 }
 function preview(){
   const n=input.value.length;
-  $("word-preview").textContent=CONFIG.points[n]?n+" letters · "+format(CONFIG.points[n])+" possible points":"3–8 letters · Connect touching tiles";
+  $("word-preview").textContent=CONFIG.points[n]?n+" letters · "+format(CONFIG.points[n])+" possible points":"3–8 letters · Select touching tiles";
 }
-function setSelection(path){selection=path||[];input.value=selection.length?wordAt(grid,selection):"";paintSelection();preview();}
+function setSelection(path){selection=path||[];input.value=selection.length?wordAt(grid,selection):"";paintSelection();preview();controls();}
 function resetSelection(){gesture=null;setSelection([]);}
 function updateBest(){if(score<=best)return;best=score;try{localStorage.setItem(storageKey,String(best));}catch{}}
 function start(){
   if(!ready||busy)return;
-  ended=false;nextId=score=moves=words=parity=0;longest="";grid=blank();layer.replaceChildren();nodes.clear();resetSelection();
+  ended=false;nextId=score=moves=words=misses=parity=0;longest="";grid=blank();layer.replaceChildren();nodes.clear();resetSelection();
   const positions=shuffle(Array.from({length:CONFIG.size**2},(_,i)=>[Math.floor(i/CONFIG.size),i%CONFIG.size]));
   for(const [r,c] of positions.slice(0,CONFIG.startingLetters))grid[r][c]=makeLetter();
-  $("over").hidden=true;$("gravity").textContent="Choose a direction";status("Look for a word or shift to arrange the letters.");render(false);controls();
+  $("over").hidden=true;$("gravity").textContent="Choose a direction";status("Every action adds four letters. Aim for five-letter words or longer.");render(false);controls();
 }
 function checkEnd(){
-  if(!gameOver(grid,trie))return;
-  ended=true;resetSelection();$("summary").textContent=format(score)+" points · "+moves+" shifts · "+words+" words";
+  if(!gameOver(grid))return;
+  ended=true;resetSelection();$("summary").textContent=format(score)+" points · "+moves+" shifts · "+words+" words · "+misses+" misses";
   $("round-longest").textContent="Longest word: "+(longest||"—");
-  $("over").hidden=false;status("No valid words or shifts remaining.");controls();$("again").focus();
+  $("over").hidden=false;status("The board is full. Round over.");controls();$("again").focus();
 }
 async function flash(ids){
   for(const id of ids)nodes.get(id)?.classList.add("matched");
@@ -79,23 +78,32 @@ async function shift(dir){
     const plan=spawnPlan(grid,dir,parity);parity=1-parity;
     for(const {r,c} of plan)grid[r][c]=makeLetter();
     render();await wait(CONFIG.spawnMs);
-    status(plan.length+" letter"+(plan.length===1?"":"s")+" added. Find a connected word.");
+    status(plan.length+" letter"+(plan.length===1?"":"s")+" added. Aim for a long word.");
     checkEnd();
   }finally{busy=false;controls();}
 }
 async function submitWord(){
-  if(!ready||busy||ended)return;
-  const word=input.value.trim().toUpperCase();
-  if(!/^[A-Z]{3,8}$/.test(word)){status("Choose a word of 3–8 letters.");return;}
-  if(!dictionary.has(word)){status(word+" is not in the prototype dictionary.");return;}
-  const path=selection.length&&wordAt(grid,selection)===word?selection:findWord(grid,trie,word);
+  if(!ready||busy||ended||selection.length<CONFIG.minWord)return;
+  const path=selection.slice(),word=wordAt(grid,path);
   const result=clearWord(grid,path,dictionary);
-  if(!result){status(word+" must follow a connected path without reusing tiles.");return;}
-  busy=true;controls();const ids=new Set(path.map(([r,c])=>grid[r][c].id));resetSelection();
+  busy=true;controls();
+  const ids=result?new Set(path.map(([r,c])=>grid[r][c].id)):null;
+  resetSelection();
   try{
-    score+=result.points;words++;if(word.length>longest.length)longest=word;updateBest();stats();
-    status(word+" · +"+format(result.points)+" points! No new blocks added.");
-    await flash(ids); // Word clearing leaves all other letters in place.
+    if(result){
+      score+=result.points;words++;if(word.length>longest.length)longest=word;updateBest();stats();
+      status(word+" · +"+format(result.points)+" points!");
+      await flash(ids);
+    }else{
+      misses++;stats();status(word+" is not in the dictionary. Four-letter penalty.");
+    }
+    const plan=result?wordSpawnPlan(grid,path):invalidSpawnPlan(grid);
+    for(const {r,c} of plan)grid[r][c]=makeLetter();
+    render();await wait(CONFIG.spawnMs);
+    if(result){
+      const net=plan.length-path.length;
+      status(word+" · +"+format(result.points)+" points · "+plan.length+" added · "+(net===0?"space unchanged":net<0?(-net)+" spaces gained":net+" extra occupied spaces")+".");
+    }else status(word+" is not in the dictionary · "+plan.length+" penalty letters added.");
     checkEnd();
   }finally{busy=false;controls();}
 }
@@ -138,9 +146,8 @@ boardEl.addEventListener("pointerup",e=>{
   setSelection(next);
 });
 boardEl.addEventListener("pointercancel",()=>resetSelection());
-input.addEventListener("input",()=>{selection=[];paintSelection();input.value=input.value.toUpperCase().replace(/[^A-Z]/g,"").slice(0,CONFIG.maxWord);preview();});
 $("word-form").addEventListener("submit",e=>{e.preventDefault();void submitWord();});
-$("clear").addEventListener("click",()=>{resetSelection();input.focus();});
+$("clear").addEventListener("click",()=>resetSelection());
 document.querySelectorAll("[data-dir]").forEach(b=>b.addEventListener("click",()=>void shift(b.dataset.dir)));
 document.addEventListener("keydown",e=>{
   if(e.altKey||e.ctrlKey||e.metaKey||e.isComposing)return;
@@ -148,9 +155,7 @@ document.addEventListener("keydown",e=>{
   if(dirs[e.key]){e.preventDefault();if(!e.repeat)void shift(dirs[e.key]);return;}
   if(!ready||busy||ended)return;
   if(e.key==="Escape"){resetSelection();return;}
-  if(e.target===input)return;
-  if(e.key==="Enter"&&selection.length){e.preventDefault();void submitWord();return;}
-  if(/^[a-zA-Z]$/.test(e.key)){e.preventDefault();if(selection.length)resetSelection();input.focus();input.value=(input.value+e.key.toUpperCase()).slice(0,CONFIG.maxWord);preview();}
+  if(e.key==="Enter"&&selection.length>=CONFIG.minWord){e.preventDefault();void submitWord();}
 });
 $("restart").addEventListener("click",start);$("again").addEventListener("click",start);
 async function load(){
@@ -158,7 +163,6 @@ async function load(){
     const response=await fetch("words.txt?v=1");if(!response.ok)throw Error("Dictionary unavailable");
     for(const word of (await response.text()).toUpperCase().split(/\s+/))if(/^[A-Z]{3,8}$/.test(word))dictionary.add(word);
     if(dictionary.size<10000)throw Error("Incomplete dictionary");
-    trie=buildTrie(dictionary);
     ready=true;start();
   }catch(error){status("Could not load the dictionary. Reload this page to try again.");console.error(error);}
 }
