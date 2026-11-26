@@ -2,7 +2,7 @@
 // Letterlock pure game rules.
 const CONFIG = {
   "size": 8,
-  "startingLetters": 24,
+  "startingLetters": 32,
   "incomingLetters": 4,
   "minWord": 3,
   "maxWord": 12,
@@ -53,7 +53,7 @@ const CONFIG = {
   "assistedCandidates": 8,
   "searchBudget": 40000,
   "minOpportunityLength": 5,
-  "wordTimeMs": 30000,
+  "wordTimeMs": 25000,
   "maxOpportunityLength": 8
 };
 const DIRECTIONS = ["up","down","left","right"];

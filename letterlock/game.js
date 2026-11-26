@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id);
 const boardEl=$("board"), layer=$("tiles"), input=$("word-input");
 const nodes=new Map(), dictionary=new Set(), generationWords=new Set();
 let generationTrie;
-const storageKey="letterlock-best-v7";
+const storageKey="letterlock-best-v8";
 const arrows={up:"↑",down:"↓",left:"←",right:"→"};
 let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, timeouts=0, longest="", parity=0, busy=false, ended=false, ready=false, selection=[], gesture=null;
 try{best=Math.max(0,Number(localStorage.getItem(storageKey))||0);}catch{}
