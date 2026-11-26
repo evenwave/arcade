@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#151c28">
   <title>Letterlock | Evenwave's Arcade</title>
-  <link rel="stylesheet" href="styles.css?v=5">
-  <script src="engine.js?v=5" defer></script>
-  <script src="game.js?v=5" defer></script>
+  <link rel="stylesheet" href="styles.css?v=6">
+  <script src="engine.js?v=6" defer></script>
+  <script src="game.js?v=6" defer></script>
 </head>
 <body>
 <main class="game">
   <header>
-    <div class="topline"><a href="../">← Arcade</a><span>ARCADE / PROTOTYPE 05</span></div>
+    <div class="topline"><a href="../">← Arcade</a><span>ARCADE / PROTOTYPE 06</span></div>
     <h1>Letter<span>lock</span></h1>
-    <p>Every action costs four letters. Make it count.</p>
+    <p>Find long words. Make every shift count.</p>
   </header>
   <section class="scoreboard" aria-label="Game statistics">
     <div class="stat primary"><span>Score</span><strong id="score">0</strong></div>
@@ -24,8 +24,8 @@
   </section>
   <section class="playfield" aria-label="Game area">
     <div class="word-timer" id="word-timer" data-phase="normal">
-      <div class="timer-head"><span>Time to find a word</span><strong id="timer-value" role="timer" aria-live="off">20s</strong></div>
-      <div class="timer-meter" id="timer-meter" role="progressbar" aria-label="Seconds remaining" aria-valuemin="0" aria-valuemax="20" aria-valuenow="20"><div id="timer-fill"></div></div>
+      <div class="timer-head"><span>Time to find a word</span><strong id="timer-value" role="timer" aria-live="off">45s</strong></div>
+      <div class="timer-meter" id="timer-meter" role="progressbar" aria-label="Seconds remaining" aria-valuemin="0" aria-valuemax="45" aria-valuenow="45"><div id="timer-fill"></div></div>
     </div>
     <div class="board-head"><span id="occupancy">Loading…</span><span id="gravity">Choose a direction</span></div>
     <div class="meter" role="progressbar" aria-label="Board occupancy" aria-valuemin="0" aria-valuemax="64" aria-valuenow="0"><div id="fill"></div></div>
@@ -56,9 +56,9 @@
     <h2>Make room for words</h2>
     <p>Each valid shift adds four new letters, prioritizing alternating lanes on the opposite edge. If those lanes are full, other empty cells are used. An attempted shift that moves nothing costs nothing.</p>
     <p>Drag along touching letters to submit a word, or click each letter in order and press Submit or Enter. Connect horizontally, vertically, diagonally, or turn in any direction. Each tile can be used only once per word. Typing words is disabled. Click a selected letter again to deselect it and any letters after it. Drag backward to undo the last selection. Escape, ×, or an empty tile clears the selection without a penalty.</p>
-    <p>Every submitted word of at least three letters costs four new letters. A valid word clears its selected letters, then two new letters enter the cleared spaces and two enter vacant perimeter spaces. If needed, remaining letters fill other empty cells. An invalid word clears nothing and adds four letters to random vacant cells. All other tiles stay in place.</p>
-    <p>Find a valid word within 20 seconds to reset the timer. If time runs out, four new letters enter random vacant cells and a fresh countdown begins. Shifts and invalid words do not reset the timer. The countdown pauses during animations.</p>
-    <div class="mini-stats"><div>Longest word <strong id="longest">—</strong></div><div>Invalid words <strong id="misses">0</strong></div><div>Timeouts <strong id="timeouts">0</strong></div></div>
+    <p>Every valid word of at least three letters introduces four new letters. A valid word clears its selected letters, then two new letters enter the cleared spaces and two enter vacant perimeter spaces. If needed, remaining letters fill other empty cells. An unrecognized word clears nothing, adds no letters and does not reset the countdown. All other tiles stay in place.</p>
+    <p>Find a valid word within 45 seconds, or make a shift that moves letters, to reset the timer. If time runs out, four new letters enter random vacant cells and a fresh countdown begins. The timer is green until the last ten seconds, when it turns red and gently pulses. Unrecognized words do not reset the timer. The countdown pauses during animations.</p>
+    <div class="mini-stats"><div>Longest word <strong id="longest">—</strong></div><div>Timeouts <strong id="timeouts">0</strong></div></div>
     <div class="scoring"><strong>Word scoring</strong><div class="score-table"><span>3 letters <b>10</b></span><span>4 letters <b>50</b></span><span>5 letters <b>300</b></span><span>6 letters <b>750</b></span><span>7 letters <b>2,000</b></span><span>8 letters <b>5,000</b></span></div></div>
     <p class="fine">No overall time or move limit. The round ends immediately when all 64 cells are occupied, even if words remain. If fewer than four empty cells exist, the new letters fill them all. The prototype uses an expanded local dictionary of 80,600 English words (3–8 letters). Some legitimate words may still be missing. About 40% of eligible spawn batches favor opportunities for longer familiar words; the other 60% use weighted randomness. The starting board contains at least two familiar words of five or six letters. Your personal best is saved in this browser.</p>
     <p class="fine">Dictionary sources: <a href="https://github.com/MagicOctopusUrn/wordListsByLength">ENABLE-derived list</a> and <a href="https://github.com/dolph/dictionary">common English vocabulary</a>.</p>

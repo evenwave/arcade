@@ -49,7 +49,7 @@ const CONFIG = {
   "assistedCandidates": 8,
   "searchBudget": 40000,
   "minOpportunityLength": 5,
-  "wordTimeMs": 20000
+  "wordTimeMs": 45000
 };
 const DIRECTIONS = ["up","down","left","right"];
 function blank(){return Array.from({length:CONFIG.size},()=>Array(CONFIG.size).fill(null));}
@@ -163,6 +163,6 @@ function resumeClock(clock,now){if(clock.deadline===null)clock.deadline=now+cloc
 
 function resetClock(clock){clock.remaining=CONFIG.wordTimeMs;clock.deadline=null;}
 
-function timerPhase(ms){return ms<=5000?"urgent":ms<=10000?"caution":"normal";}
+function timerPhase(ms){return ms<=10000?"urgent":"normal";}
 
 function togglePath(grid,path,at){if(!at||grid[at[0]]?.[at[1]]?.kind!=="letter")return path;const index=path.findIndex(p=>same(p,at));return index>=0?path.slice(0,index):extendPath(grid,path,at);}

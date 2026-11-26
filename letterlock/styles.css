@@ -16,7 +16,6 @@
 #timer-value{font-size:1.5rem;line-height:1.2;min-width:3ch;text-align:right;font-variant-numeric:tabular-nums}
 .timer-meter{height:6px;margin-top:6px;background:#0d1420;border-radius:6px;overflow:hidden}
 #timer-fill{height:100%;width:100%;background:var(--timer-color);border-radius:6px;transition:width .1s linear,background .2s}
-.word-timer[data-phase="caution"]{--timer-color:#f1c66c}
 .word-timer[data-phase="urgent"]{--timer-color:#ff7e8e;border-color:#e26879}
 .word-timer[data-phase="urgent"] #timer-value{animation:timer-pulse 1s ease-in-out infinite}
 .word-timer[data-phase="stopped"]{--timer-color:#8d98a9}

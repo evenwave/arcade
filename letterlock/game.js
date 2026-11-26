@@ -4,9 +4,9 @@ const $=id=>document.getElementById(id);
 const boardEl=$("board"), layer=$("tiles"), input=$("word-input");
 const nodes=new Map(), dictionary=new Set(), generationWords=new Set();
 let generationTrie;
-const storageKey="letterlock-best-v5";
+const storageKey="letterlock-best-v6";
 const arrows={up:"↑",down:"↓",left:"←",right:"→"};
-let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, misses=0, timeouts=0, longest="", parity=0, busy=false, ended=false, ready=false, selection=[], gesture=null;
+let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, timeouts=0, longest="", parity=0, busy=false, ended=false, ready=false, selection=[], gesture=null;
 try{best=Math.max(0,Number(localStorage.getItem(storageKey))||0);}catch{}
 const clock=newWordClock();
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,matchMedia("(prefers-reduced-motion: reduce)").matches?0:ms));
@@ -55,7 +55,7 @@ function tickClock(){
 function stats(){
   const count=grid.flat().filter(Boolean).length, max=CONFIG.size**2;
   $("score").textContent=format(score);$("best").textContent=format(best);$("moves").textContent=format(moves);$("words").textContent=format(words);
-  $("longest").textContent=longest||"—";$("misses").textContent=format(misses);$("timeouts").textContent=format(timeouts);
+  $("longest").textContent=longest||"—";$("timeouts").textContent=format(timeouts);
   $("occupancy").textContent=count+" / "+max+" blocks";$("fill").style.width=(count/max*100)+"%";$("fill").style.background=count/max>.8?"#ee7988":count/max>.6?"#f1c66c":"var(--accent)";
   document.querySelector(".meter").setAttribute("aria-valuenow",count);
 }
@@ -93,13 +93,13 @@ function resetSelection(){gesture=null;setSelection([]);}
 function updateBest(){if(score<=best)return;best=score;try{localStorage.setItem(storageKey,String(best));}catch{}}
 function start(){
   if(!ready||busy)return;
-  ended=false;nextId=score=moves=words=misses=timeouts=parity=0;longest="";grid=blank();layer.replaceChildren();nodes.clear();resetSelection();
+  ended=false;nextId=score=moves=words=timeouts=parity=0;longest="";grid=blank();layer.replaceChildren();nodes.clear();resetSelection();
   for(const {r,c,letter} of startingLayout(generationWords))grid[r][c]=makeLetter(letter);
   $("over").hidden=true;$("gravity").textContent="Choose a direction";status("Find a word before the timer expires. Aim for five letters or longer.");render(false);resetClock(clock);resumeClock(clock,performance.now());paintClock();controls();
 }
 function checkEnd(){
   if(!gameOver(grid))return;
-  ended=true;pauseClock(clock,performance.now());paintClock();resetSelection();$("summary").textContent=format(score)+" points · "+moves+" shifts · "+words+" words · "+misses+" misses · "+timeouts+" timeouts";
+  ended=true;pauseClock(clock,performance.now());paintClock();resetSelection();$("summary").textContent=format(score)+" points · "+moves+" shifts · "+words+" words · "+timeouts+" timeouts";
   $("round-longest").textContent="Longest word: "+(longest||"—");
   $("over").hidden=false;status("The board is full. Round over.");controls();$("again").focus();
 }
@@ -120,32 +120,29 @@ async function shift(dir){
     render();await wait(CONFIG.spawnMs);
     status(plan.length+" letter"+(plan.length===1?"":"s")+" added. Aim for a long word.");
     checkEnd();
-  }finally{finishAction();}
+  }finally{finishAction(true);}
 }
 async function submitWord(){
   if(!ready||busy||ended||selection.length<CONFIG.minWord)return;
-  if(!beginAction())return;
+  // Rejected words do not pause, reset, or otherwise alter the clock or board.
+  if(clockRemaining(clock,performance.now())<=0){void timeout();return;}
   const path=selection.slice(),word=wordAt(grid,path);
   const result=clearWord(grid,path,dictionary);
-  const ids=result?new Set(path.map(([r,c])=>grid[r][c].id)):null;
+  if(!result){resetSelection();status(word+" · Word not recognized. Keep searching!");return;}
+  if(!beginAction())return;
+  const ids=new Set(path.map(([r,c])=>grid[r][c].id));
   resetSelection();
   try{
-    if(result){
-      score+=result.points;words++;if(word.length>longest.length)longest=word;updateBest();stats();
-      status(word+" · +"+format(result.points)+" points!");
-      await flash(ids);
-    }else{
-      misses++;stats();status(word+" is not in the dictionary. Four-letter penalty.");
-    }
-    const plan=result?wordSpawnPlan(grid,path):invalidSpawnPlan(grid);
+    score+=result.points;words++;if(word.length>longest.length)longest=word;updateBest();stats();
+    status(word+" · +"+format(result.points)+" points!");
+    await flash(ids);
+    const plan=wordSpawnPlan(grid,path);
     addLetters(plan);
     render();await wait(CONFIG.spawnMs);
-    if(result){
-      const net=plan.length-path.length;
-      status(word+" · +"+format(result.points)+" points · "+plan.length+" added · "+(net===0?"space unchanged":net<0?(-net)+" spaces gained":net+" extra occupied spaces")+".");
-    }else status(word+" is not in the dictionary · "+plan.length+" penalty letters added.");
+    const net=plan.length-path.length;
+    status(word+" · +"+format(result.points)+" points · "+plan.length+" added · "+(net===0?"space unchanged":net<0?(-net)+" spaces gained":net+" extra occupied spaces")+".");
     checkEnd();
-  }finally{finishAction(!!result);}
+  }finally{finishAction(true);}
 }
 function atPointer(e,inner=false){
   const rect=boardEl.getBoundingClientRect(),y=(e.clientY-rect.top)/rect.height*CONFIG.size,x=(e.clientX-rect.left)/rect.width*CONFIG.size,r=Math.floor(y),c=Math.floor(x);
