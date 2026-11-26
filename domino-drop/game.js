@@ -11,14 +11,13 @@ $("best").textContent=best.toLocaleString();
 function tileEl(t,extra=""){const el=document.createElement("div");el.className="tile "+t.color+" "+extra;el.setAttribute("aria-label",t.color+" "+t.pips);for(const pos of PIPS[t.pips]){const dot=document.createElement("i");dot.className="pip";dot.style.gridColumn=pos%3+1;dot.style.gridRow=Math.floor(pos/3)+1;el.append(dot);}return el;}
 function renderQueue(){queueEl.replaceChildren(...queue.map((pair,i)=>{const el=document.createElement("div");el.className="preview";el.setAttribute("aria-label","Upcoming "+(i+1));el.append(...pair.map(t=>tileEl(t)));return el;}));}
 function render(){
- const ghosts=active?E.ghost(board,active):[],live=active?E.cells(active):[];
+ const live=active?E.cells(active):[];
  const marked=new Set(match?match.cells.map(c=>c.y*E.W+c.x):[]);
  const megas=new Set(match?match.groups.filter(g=>g.kind==="mega").flatMap(g=>g.cells.map(c=>c.y*E.W+c.x)):[]);
  const maths=new Set(match?match.groups.filter(g=>g.kind==="math").flatMap(g=>g.cells.map(c=>c.y*E.W+c.x)):[]);
- for(let i=0;i<grid.length;i++){const x=i%E.W,y=Math.floor(i/E.W),n=grid[i];n.replaceChildren();const t=board[y][x],a=live.find(c=>c.x===x&&c.y===y),g=ghosts.find(c=>c.x===x&&c.y===y);
+ for(let i=0;i<grid.length;i++){const x=i%E.W,y=Math.floor(i/E.W),n=grid[i];n.replaceChildren();const t=board[y][x],a=live.find(c=>c.x===x&&c.y===y);
   if(t)n.append(tileEl(t,marked.has(i)?"flash "+(megas.has(i)?"mega":maths.has(i)?"math":""):""));
   else if(a)n.append(tileEl(a.t,"active "+(a.t===active.tiles[0]?"first":"")));
-  else if(g)n.append(tileEl(g.t,"ghost"));
  }
  $("score").textContent=score.toLocaleString();$("best").textContent=best.toLocaleString();$("pieces").textContent=placed;$("level").textContent=1+Math.floor(placed/20);
 }
