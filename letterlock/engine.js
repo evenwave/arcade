@@ -48,7 +48,8 @@ const CONFIG = {
   "assistedChance": 0.4,
   "assistedCandidates": 8,
   "searchBudget": 40000,
-  "minOpportunityLength": 5
+  "minOpportunityLength": 5,
+  "wordTimeMs": 20000
 };
 const DIRECTIONS = ["up","down","left","right"];
 function blank(){return Array.from({length:CONFIG.size},()=>Array(CONFIG.size).fill(null));}
@@ -150,3 +151,18 @@ function startingLayout(dictionary,rng=Math.random){
   for(const [r,c] of shuffle(emptySlots(grid),rng).slice(0,CONFIG.startingLetters-placements.length))placements.push({r,c,letter:randomLetter(rng)});
   return placements;
 }
+
+// Countdown state uses a monotonic timestamp supplied by the browser.
+function newWordClock(){return {remaining:CONFIG.wordTimeMs,deadline:null};}
+
+function clockRemaining(clock,now){return clock.deadline===null?clock.remaining:Math.max(0,clock.deadline-now);}
+
+function pauseClock(clock,now){clock.remaining=clockRemaining(clock,now);clock.deadline=null;}
+
+function resumeClock(clock,now){if(clock.deadline===null)clock.deadline=now+clock.remaining;}
+
+function resetClock(clock){clock.remaining=CONFIG.wordTimeMs;clock.deadline=null;}
+
+function timerPhase(ms){return ms<=5000?"urgent":ms<=10000?"caution":"normal";}
+
+function togglePath(grid,path,at){if(!at||grid[at[0]]?.[at[1]]?.kind!=="letter")return path;const index=path.findIndex(p=>same(p,at));return index>=0?path.slice(0,index):extendPath(grid,path,at);}

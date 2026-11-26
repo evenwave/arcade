@@ -4,10 +4,11 @@ const $=id=>document.getElementById(id);
 const boardEl=$("board"), layer=$("tiles"), input=$("word-input");
 const nodes=new Map(), dictionary=new Set(), generationWords=new Set();
 let generationTrie;
-const storageKey="letterlock-best-v4";
+const storageKey="letterlock-best-v5";
 const arrows={up:"↑",down:"↓",left:"←",right:"→"};
-let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, misses=0, longest="", parity=0, busy=false, ended=false, ready=false, selection=[], gesture=null;
+let grid=blank(), nextId=0, score=0, best=0, moves=0, words=0, misses=0, timeouts=0, longest="", parity=0, busy=false, ended=false, ready=false, selection=[], gesture=null;
 try{best=Math.max(0,Number(localStorage.getItem(storageKey))||0);}catch{}
+const clock=newWordClock();
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,matchMedia("(prefers-reduced-motion: reduce)").matches?0:ms));
 const format=n=>n.toLocaleString();
 const status=t=>{$("status").textContent=t;};
@@ -17,10 +18,44 @@ function addLetters(plan){
   plan.forEach(({r,c},i)=>{grid[r][c]=makeLetter(letters[i]);});
 }
 for(let i=0;i<CONFIG.size**2;i++){const cell=document.createElement("div");cell.className="cell";$("cells").append(cell);}
+function paintClock(){
+  const ms=clockRemaining(clock,performance.now()),seconds=Math.ceil(ms/1000);
+  const phase=ended?"stopped":timerPhase(ms);
+  $("word-timer").dataset.phase=phase;
+  $("timer-value").textContent=String(seconds).padStart(2,"0")+"s";
+  $("timer-fill").style.width=(ms/CONFIG.wordTimeMs*100)+"%";
+  $("timer-meter").setAttribute("aria-valuenow",seconds);
+}
+function beginAction(){
+  if(!ready||busy||ended)return false;
+  const now=performance.now();
+  if(clockRemaining(clock,now)<=0){void timeout();return false;}
+  pauseClock(clock,now);busy=true;controls();paintClock();return true;
+}
+function finishAction(reset=false){
+  if(reset&&!ended)resetClock(clock);
+  busy=false;
+  if(!ended)resumeClock(clock,performance.now());
+  paintClock();controls();
+}
+async function timeout(){
+  if(!ready||busy||ended||clockRemaining(clock,performance.now())>0)return;
+  pauseClock(clock,performance.now());busy=true;gesture=null;controls();paintClock();
+  try{
+    timeouts++;const plan=invalidSpawnPlan(grid);addLetters(plan);render();
+    status("Time expired · "+plan.length+" penalty letters added.");
+    await wait(CONFIG.spawnMs);checkEnd();
+  }finally{finishAction(true);}
+}
+function tickClock(){
+  if(!ready||ended||busy)return;
+  paintClock();
+  if(clockRemaining(clock,performance.now())<=0)void timeout();
+}
 function stats(){
   const count=grid.flat().filter(Boolean).length, max=CONFIG.size**2;
   $("score").textContent=format(score);$("best").textContent=format(best);$("moves").textContent=format(moves);$("words").textContent=format(words);
-  $("longest").textContent=longest||"—";$("misses").textContent=format(misses);
+  $("longest").textContent=longest||"—";$("misses").textContent=format(misses);$("timeouts").textContent=format(timeouts);
   $("occupancy").textContent=count+" / "+max+" blocks";$("fill").style.width=(count/max*100)+"%";$("fill").style.background=count/max>.8?"#ee7988":count/max>.6?"#f1c66c":"var(--accent)";
   document.querySelector(".meter").setAttribute("aria-valuenow",count);
 }
@@ -58,13 +93,13 @@ function resetSelection(){gesture=null;setSelection([]);}
 function updateBest(){if(score<=best)return;best=score;try{localStorage.setItem(storageKey,String(best));}catch{}}
 function start(){
   if(!ready||busy)return;
-  ended=false;nextId=score=moves=words=misses=parity=0;longest="";grid=blank();layer.replaceChildren();nodes.clear();resetSelection();
+  ended=false;nextId=score=moves=words=misses=timeouts=parity=0;longest="";grid=blank();layer.replaceChildren();nodes.clear();resetSelection();
   for(const {r,c,letter} of startingLayout(generationWords))grid[r][c]=makeLetter(letter);
-  $("over").hidden=true;$("gravity").textContent="Choose a direction";status("Every action adds four letters. Aim for five-letter words or longer.");render(false);controls();
+  $("over").hidden=true;$("gravity").textContent="Choose a direction";status("Find a word before the timer expires. Aim for five letters or longer.");render(false);resetClock(clock);resumeClock(clock,performance.now());paintClock();controls();
 }
 function checkEnd(){
   if(!gameOver(grid))return;
-  ended=true;resetSelection();$("summary").textContent=format(score)+" points · "+moves+" shifts · "+words+" words · "+misses+" misses";
+  ended=true;pauseClock(clock,performance.now());paintClock();resetSelection();$("summary").textContent=format(score)+" points · "+moves+" shifts · "+words+" words · "+misses+" misses · "+timeouts+" timeouts";
   $("round-longest").textContent="Longest word: "+(longest||"—");
   $("over").hidden=false;status("The board is full. Round over.");controls();$("again").focus();
 }
@@ -76,7 +111,8 @@ async function shift(dir){
   if(!ready||busy||ended||!DIRECTIONS.includes(dir))return;
   const next=slide(grid,dir);
   if(!changed(grid,next)){status("No movement in that direction. No letters added.");return;}
-  busy=true;controls();resetSelection();
+  if(!beginAction())return;
+  resetSelection();
   try{
     moves++;$("gravity").textContent=arrows[dir]+" Shift "+dir;grid=next;render(false);await wait(CONFIG.slideMs);
     const plan=spawnPlan(grid,dir,parity);parity=1-parity;
@@ -84,13 +120,13 @@ async function shift(dir){
     render();await wait(CONFIG.spawnMs);
     status(plan.length+" letter"+(plan.length===1?"":"s")+" added. Aim for a long word.");
     checkEnd();
-  }finally{busy=false;controls();}
+  }finally{finishAction();}
 }
 async function submitWord(){
   if(!ready||busy||ended||selection.length<CONFIG.minWord)return;
+  if(!beginAction())return;
   const path=selection.slice(),word=wordAt(grid,path);
   const result=clearWord(grid,path,dictionary);
-  busy=true;controls();
   const ids=result?new Set(path.map(([r,c])=>grid[r][c].id)):null;
   resetSelection();
   try{
@@ -109,7 +145,7 @@ async function submitWord(){
       status(word+" · +"+format(result.points)+" points · "+plan.length+" added · "+(net===0?"space unchanged":net<0?(-net)+" spaces gained":net+" extra occupied spaces")+".");
     }else status(word+" is not in the dictionary · "+plan.length+" penalty letters added.");
     checkEnd();
-  }finally{busy=false;controls();}
+  }finally{finishAction(!!result);}
 }
 function atPointer(e,inner=false){
   const rect=boardEl.getBoundingClientRect(),y=(e.clientY-rect.top)/rect.height*CONFIG.size,x=(e.clientX-rect.left)/rect.width*CONFIG.size,r=Math.floor(y),c=Math.floor(x);
@@ -145,7 +181,7 @@ boardEl.addEventListener("pointerup",e=>{
     else status("Connect at least three touching letters.");
     return;
   }
-  const next=extendPath(grid,g.previous,g.start);
+  const next=togglePath(grid,g.previous,g.start);
   if(next===g.previous&&!same(g.previous[g.previous.length-1],g.start)){status("Choose a touching unused letter, or clear your selection.");return;}
   setSelection(next);
 });
@@ -174,4 +210,5 @@ async function load(){
     ready=true;start();
   }catch(error){status("Could not load the dictionary. Reload this page to try again.");console.error(error);}
 }
+setInterval(tickClock,100);
 void load();

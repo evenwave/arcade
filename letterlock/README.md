@@ -1,4 +1,4 @@
-# Letterlock — Prototype 04
+# Letterlock — Prototype 05
 Standalone word puzzle for Evenwave's Arcade.
 
 - index.html: markup; styles.css: presentation; engine.js: pure game rules; game.js: browser controls and animations.
@@ -9,4 +9,6 @@ Standalone word puzzle for Evenwave's Arcade.
 - Shift with arrow keys or buttons; drag to submit, click adjacent letters then submit or press Enter; typed words disabled. Board swipes are reserved for word selection.
 - Each valid shift adds four letters, prioritizing alternating zipper lanes, then other opposite-edge slots, then any empty cells. No colored obstacles.
 - Only manually submitted words score. They clear in place without collapsing the board. Four new letters appear: two in cleared word cells and two in vacant perimeter cells where possible, with fallback to other vacant cells. Invalid submissions of at least three letters add four letters without clearing. Filling the board immediately ends the round. Scoring is 10/50/300/750/2000/5000 for lengths 3–8. Words may follow any eight-neighbor path without reusing a tile.
-- Scores are stored locally using a separate letterlock-best-v4 key.
+- Scores are stored locally using a separate letterlock-best-v5 key.
+- Each round starts with a 20-second countdown. Valid words reset it, as do timeouts (which spawn four letters in random vacant spaces without removing existing tiles). Shifts and invalid submissions preserve remaining time. All action animations and generation pause the clock. At 10 seconds it turns amber; at five seconds it turns red and gently pulses, with reduced-motion support. Timeout count is separate from invalid-word count. A timeout preserves the selected path but cancels any active pointer gesture so an incomplete drag cannot accidentally submit.
+- Click a selected tile to remove it and every later tile from the path; click the sole selected tile to clear it. Drag backtracking continues to undo the last step without submitting.
