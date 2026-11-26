@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#151927"><title>Domino Drop | Evenwave Arcade</title>
+<link rel="stylesheet" href="styles.css?v=1"><script defer src="engine.js?v=1"></script><script defer src="game.js?v=1"></script>
+</head>
+<body>
+<main class="game">
+<header><a href="../">← Arcade</a><span>PROTOTYPE 01</span><button id="pause" disabled>Pause</button></header>
+<h1>Domino <span>Drop</span></h1>
+<div class="layout">
+ <section class="stats" aria-label="Round statistics">
+  <div><small>Score</small><strong id="score">0</strong></div>
+  <div><small>Best</small><strong id="best">0</strong></div>
+  <div><small>Level</small><strong id="level">1</strong></div>
+  <div><small>Pieces</small><strong id="pieces">0</strong></div>
+ </section>
+ <section class="next" aria-label="Next three dominoes"><h2>Next 3</h2><div id="queue" class="queue"></div></section>
+ <section class="playfield" aria-label="Domino Drop board">
+  <div id="board" class="board" role="img" aria-label="Six column by twelve row game board"></div>
+  <div id="overlay" class="overlay">
+   <div class="dialog"><h2 id="overlay-title">Ready to drop?</h2><p id="overlay-text">Match colors to survive. Make ten with three blocks to score big.</p><button id="start" class="primary">Start game</button></div>
+  </div>
+ </section>
+ <div class="feedback" id="feedback" role="status" aria-live="polite">Place dominoes to make matches.</div>
+ <section class="controls" aria-label="Game controls">
+ <button data-action="left" aria-label="Move left"><b>←</b><small>A</small></button>
+ <button data-action="rotate" aria-label="Rotate clockwise"><b>↻</b><small>W</small></button>
+ <button data-action="down" aria-label="Accelerate descent"><b>↓</b><small>S · hold</small></button>
+ <button data-action="right" aria-label="Move right"><b>→</b><small>D</small></button>
+ </section>
+ <aside class="rules"><h2>How to play</h2>
+ <p>Move with A/D or ←/→. Rotate clockwise with W or ↑. Hold S or ↓ to drop faster. Touch buttons work the same way. P or Escape pauses.</p>
+ <p>Each falling pair separates on landing. The ghost shows where each block will settle. Match horizontally or vertically:</p>
+ <div class="rule"><span>3+ same color</span><strong>25</strong></div>
+ <div class="rule"><span>3 blocks = 10 pips</span><strong>100</strong></div>
+ <div class="rule"><span>Both in the same triple</span><strong>250</strong></div>
+ <p>Simultaneous matches earn a combo. Overlapping tiles clear only once. A double match replaces the color and math score for its triple. Each successive cascade wave increases the multiplier. The next pair waits until all cascades finish.</p>
+ <p>Speed increases gently every 20 placed pairs. If a new pair cannot enter, the round ends.</p>
+ </aside>
+</div>
+</main>
+</body></html>
