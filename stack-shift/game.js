@@ -81,69 +81,124 @@ function play() {
   else start();
 }
 
-// The book artwork is clipped to the exact original collision rectangle.
-// Ornamentation scales down safely as the stack becomes narrower.
+// Three visible surfaces, all contained in the original collision rectangle.
+// Narrow books lose ornamentation, not their playable width.
 function drawBlock(block, y) {
   const x = block.x, w = block.width, h = blockHeight - 2;
   if (w <= 0) return;
-  context.save();
-  context.beginPath();
-  context.rect(x, y, w, h);
-  context.clip();
-  const leather = context.createLinearGradient(0, y, 0, y + h);
-  leather.addColorStop(0, '#ffffff28');
-  leather.addColorStop(.16, '#ffffff0c');
-  leather.addColorStop(.65, '#00000000');
-  leather.addColorStop(1, '#00000065');
-  context.fillStyle = block.color;
-  context.fillRect(x, y, w, h);
-  context.fillStyle = leather;
-  context.fillRect(x, y, w, h);
-  // Raised cover edges and a warm brass outline.
-  context.fillStyle = '#100e0b';
-  context.fillRect(x, y + h - 2, w, 2);
-  context.fillStyle = '#d0af75';
-  context.fillRect(x, y + 2, w, 1);
-  context.fillStyle = '#a17e4c';
-  context.fillRect(x, y + h - 4, w, 1);
-  if (w >= 12) {
-    const inset = Math.min(5, w * .12);
-    context.strokeStyle = '#d3b47c88';
-    context.lineWidth = .8;
-    context.strokeRect(x + inset, y + 5, w - inset * 2, h - 10);
+  const c = context;
+  c.save();
+  c.beginPath(); c.rect(x, y, w, h); c.clip();
+
+  // Keep extremely narrow books visibly solid instead of drawing tiny details.
+  if (w < 10) {
+    c.fillStyle = block.color; c.fillRect(x, y, w, h);
+    c.fillStyle = '#e7c68a'; c.fillRect(x, y + 2, w, 1);
+    c.fillStyle = '#17120f'; c.fillRect(x, y + h - 2, w, 2);
+    c.restore(); return;
   }
-  if (w >= 32) {
-    // Gilt raised bands and an embossed central diamond on the spine.
-    const band = Math.min(9, w * .12);
-    for (const bx of [x + band, x + w - band - 2]) {
-      context.fillStyle = '#110c0a70';
-      context.fillRect(bx - 1, y + 4, 4, h - 8);
-      context.fillStyle = '#c7a36a';
-      context.fillRect(bx, y + 5, 1.5, h - 10);
-    }
-    const cx = x + w / 2, cy = y + h / 2;
-    context.strokeStyle = '#e4c58b';
-    context.lineWidth = 1;
-    context.beginPath();
-    context.moveTo(cx, cy - 4); context.lineTo(cx + 4, cy);
-    context.lineTo(cx, cy + 4); context.lineTo(cx - 4, cy);
-    context.closePath(); context.stroke();
-    if (w >= 60) {
-      const line = Math.min(18, w * .16);
-      context.fillStyle = '#bfa16d9c';
-      context.fillRect(cx - 8 - line, cy - .5, line, 1);
-      context.fillRect(cx + 8, cy - .5, line, 1);
-    }
+
+  const depth = Math.min(12, w * .16);
+  const rise = Math.min(5, depth * .55);
+  const front = w - depth, right = x + front, bottom = y + h;
+  const top = y + rise, faceH = h - rise;
+  function polygon(points, fill) {
+    c.beginPath(); c.moveTo(...points[0]);
+    for (const point of points.slice(1)) c.lineTo(...point);
+    c.closePath(); c.fillStyle = fill; c.fill();
   }
-  // Fine, fixed leather grain; no random flicker during motion.
-  if (w >= 20) {
-    context.fillStyle = '#ffffff0c';
-    for (let i = 3; i < w - 2; i += 7) {
-      context.fillRect(x + i, y + 7 + (i * 11 % 13), 1, 1);
-      context.fillRect(x + i + 1, y + 8 + (i * 7 % 12), 1, 1);
-    }
+
+  // Top cover: slanted plane, catching the warm reading-room light.
+  const cover = [[x, top], [x + depth, y], [x + w, y], [right, top]];
+  polygon(cover, block.color);
+  polygon(cover, '#f8d6a13b');
+  polygon([[x, top], [x + depth, y], [x + depth + .7, y + .7], [x + .7, top + .7]], '#e8c38b8c');
+  c.strokeStyle = '#d7b0789c'; c.lineWidth = .7;
+  c.beginPath(); c.moveTo(x + depth, y + .55); c.lineTo(x + w - .5, y + .55); c.stroke();
+
+  // Right-hand page block. Fine page lines run along the sloping fore-edge.
+  const side = [[right, top], [x + w, y], [x + w, bottom - rise], [right, bottom]];
+  polygon(side, block.color);
+  const pageTop = top + 3, pageBottom = bottom - 3;
+  const pages = [[right, pageTop], [x + w, pageTop - rise], [x + w, pageBottom - rise], [right, pageBottom]];
+  const paper = c.createLinearGradient(right, 0, x + w, 0);
+  paper.addColorStop(0, '#aa8a5b'); paper.addColorStop(.25, '#e5cea1'); paper.addColorStop(1, '#f3e1b8');
+  polygon(pages, paper);
+  c.lineWidth = .55;
+  for (let py = pageTop + 2; py < pageBottom - .5; py += 2.2) {
+    c.strokeStyle = '#80633f65';
+    c.beginPath(); c.moveTo(right, py); c.lineTo(x + w, py - rise); c.stroke();
   }
-  context.restore();
+  polygon([[right, pageBottom], [x + w, pageBottom - rise], [x + w, bottom - rise], [right, bottom]], '#00000055');
+  c.strokeStyle = '#f4d39a65'; c.lineWidth = .7;
+  c.beginPath(); c.moveTo(right, top + 1); c.lineTo(x + w - .3, y + 1); c.stroke();
+
+  // Convex spine: rounded ends, darker shoulders and a soft highlight.
+  const radius = Math.min(3.5, front * .14);
+  c.beginPath();
+  c.moveTo(x + radius, top);
+  c.quadraticCurveTo(x, top, x, top + radius);
+  c.lineTo(x, bottom - radius);
+  c.quadraticCurveTo(x, bottom, x + radius, bottom);
+  c.lineTo(right - radius, bottom);
+  c.quadraticCurveTo(right, bottom, right, bottom - radius);
+  c.lineTo(right, top + radius);
+  c.quadraticCurveTo(right, top, right - radius, top);
+  c.closePath();
+  c.fillStyle = block.color; c.fill();
+  c.save(); c.clip();
+  const leather = c.createLinearGradient(0, top, 0, bottom);
+  leather.addColorStop(0, '#00000065');
+  leather.addColorStop(.14, '#ffffff24');
+  leather.addColorStop(.32, '#f9d5a13f');
+  leather.addColorStop(.57, '#ffffff06');
+  leather.addColorStop(.85, '#00000038');
+  leather.addColorStop(1, '#00000088');
+  c.fillStyle = leather; c.fillRect(x, top, front, faceH);
+  const shoulders = c.createLinearGradient(x, 0, right, 0);
+  shoulders.addColorStop(0, '#00000055');
+  shoulders.addColorStop(.1, '#ffffff0a');
+  shoulders.addColorStop(.8, '#ffffff00');
+  shoulders.addColorStop(1, '#00000060');
+  c.fillStyle = shoulders; c.fillRect(x, top, front, faceH);
+  // Thin tooling lines wrap the curved spine.
+  c.fillStyle = '#d6b578bb'; c.fillRect(x + 1, top + 2, front - 2, .8);
+  c.fillStyle = '#af8b54'; c.fillRect(x + 1, bottom - 3, front - 2, .8);
+  if (front >= 25) {
+    const band = Math.min(10, front * .15);
+    for (const bx of [x + band, right - band - 3]) {
+      const raised = c.createLinearGradient(bx - 1, 0, bx + 4, 0);
+      raised.addColorStop(0, '#00000070');
+      raised.addColorStop(.35, '#e8c58b99');
+      raised.addColorStop(.65, '#a77b4788');
+      raised.addColorStop(1, '#00000055');
+      c.fillStyle = raised; c.fillRect(bx - 1, top + 2, 5, faceH - 4);
+      c.fillStyle = '#e1bc7e'; c.fillRect(bx + .4, top + 4, .8, faceH - 8);
+    }
+    const cx = x + front / 2, cy = top + faceH / 2;
+    if (front >= 54) {
+      const labelW = Math.min(45, front * .44);
+      c.fillStyle = '#100d0b66'; c.fillRect(cx - labelW/2, cy - 5, labelW, 10);
+      c.strokeStyle = '#c9a56e'; c.lineWidth = .65;
+      c.strokeRect(cx - labelW/2, cy - 5, labelW, 10);
+      c.fillStyle = '#e4c58b99';
+      c.fillRect(cx-labelW/2+3, cy-.5, labelW/2-9, .8);
+      c.fillRect(cx+6, cy-.5, labelW/2-9, .8);
+    }
+    c.strokeStyle = '#e4c58b'; c.lineWidth = .9;
+    c.beginPath(); c.moveTo(cx, cy - 3.5); c.lineTo(cx + 3.5, cy);
+    c.lineTo(cx, cy + 3.5); c.lineTo(cx - 3.5, cy); c.closePath(); c.stroke();
+  }
+  // Stable fine leather grain.
+  if (front >= 20) {
+    c.fillStyle = '#ffffff12';
+    for (let i = 3; i < front - 2; i += 7)
+      c.fillRect(x + i, top + 4 + (i * 11 % 12), .8, .8);
+  }
+  c.restore();
+  // Tight contact shadow along the bottom of each book.
+  c.fillStyle = '#08070565'; c.fillRect(x + 1, bottom - 1.1, front - 2, 1.1);
+  c.restore();
 }
 
 function draw() {
