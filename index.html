@@ -21,21 +21,22 @@
         <button type="button" id="toggle-upcoming" aria-expanded="true" aria-controls="upcoming" hidden>Hide upcoming</button>
       </div>
       <div class="game-grid">
-        <article class="game-card stack">
-          <a class="game-art stack-art" href="stack-shift/" aria-label="Play Tower Stack">
+        <article class="game-card stack" style="--accent:#d7b77f">
+          <a class="game-art stack-art" href="stack-shift/?v=book1" aria-label="Play Book Stack">
             <svg class="cover" viewBox="0 0 320 200" width="320" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-              <defs><linearGradient id="tower-bg" x2="0" y2="1"><stop stop-color="#14172c"/><stop offset="1" stop-color="#382663"/></linearGradient><linearGradient id="tower-block" x2="1" y2="1"><stop stop-color="#c3adff"/><stop offset="1" stop-color="#8060dc"/></linearGradient></defs>
-              <rect width="320" height="200" fill="url(#tower-bg)"/>
-              <path d="M32 174H288M72 26V174M248 26V174" stroke="#a78bfa" stroke-opacity=".12" stroke-dasharray="4 7"/>
-              <rect x="56" y="152" width="208" height="17" rx="4" fill="url(#tower-block)" stroke="#dfd4ff" stroke-opacity=".32"/><rect x="68" y="130" width="184" height="17" rx="4" fill="url(#tower-block)" stroke="#dfd4ff" stroke-opacity=".32"/><rect x="81" y="108" width="158" height="17" rx="4" fill="url(#tower-block)" stroke="#dfd4ff" stroke-opacity=".32"/><rect x="93.5" y="86" width="133" height="17" rx="4" fill="url(#tower-block)" stroke="#dfd4ff" stroke-opacity=".32"/><rect x="106" y="64" width="108" height="17" rx="4" fill="url(#tower-block)" stroke="#dfd4ff" stroke-opacity=".32"/><rect x="151.5" y="42" width="89" height="17" rx="4" fill="url(#tower-block)" stroke="#dfd4ff" stroke-opacity=".32"/>
-              <path d="M97 30H158M105 23L97 30l8 7" fill="none" stroke="#d2bfff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/>
+              <defs><radialGradient id="book-bg"><stop stop-color="#39483a"/><stop offset="1" stop-color="#191a19"/></radialGradient><linearGradient id="book-sheen" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff" stop-opacity=".12"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient></defs>
+              <rect width="320" height="200" fill="url(#book-bg)"/><rect x="12" y="12" width="296" height="176" rx="5" fill="none" stroke="#b99a61" stroke-opacity=".32"/>
+              <path d="M32 174H288M72 26V174M248 26V174" stroke="#d3b47b" stroke-opacity=".14" stroke-dasharray="4 7"/>
+              <rect x="32" y="171" width="256" height="8" rx="2" fill="#654326" stroke="#a47b4b"/>
+              <g><rect x="54" y="151" width="212" height="18" rx="2" fill="#493727" stroke="#1b1712"/><rect x="55" y="152" width="210" height="16" rx="2" fill="url(#book-sheen)"/><path d="M56 153h208M56 166h208M63 155v10M257 155v10" stroke="#c6a36a" stroke-width="1"/><path d="M160 156l4 4-4 4-4-4z" fill="none" stroke="#dfc18a"/></g><g><rect x="67" y="129" width="186" height="18" rx="2" fill="#254c3b" stroke="#1b1712"/><rect x="68" y="130" width="184" height="16" rx="2" fill="url(#book-sheen)"/><path d="M69 131h182M69 144h182M76 133v10M244 133v10" stroke="#c6a36a" stroke-width="1"/><path d="M160 134l4 4-4 4-4-4z" fill="none" stroke="#dfc18a"/></g><g><rect x="82" y="107" width="156" height="18" rx="2" fill="#652e35" stroke="#1b1712"/><rect x="83" y="108" width="154" height="16" rx="2" fill="url(#book-sheen)"/><path d="M84 109h152M84 122h152M91 111v10M229 111v10" stroke="#c6a36a" stroke-width="1"/><path d="M160 112l4 4-4 4-4-4z" fill="none" stroke="#dfc18a"/></g><g><rect x="95" y="85" width="130" height="18" rx="2" fill="#263c54" stroke="#1b1712"/><rect x="96" y="86" width="128" height="16" rx="2" fill="url(#book-sheen)"/><path d="M97 87h126M97 100h126M104 89v10M216 89v10" stroke="#c6a36a" stroke-width="1"/><path d="M160 90l4 4-4 4-4-4z" fill="none" stroke="#dfc18a"/></g><g><rect x="107" y="63" width="106" height="18" rx="2" fill="#69452d" stroke="#1b1712"/><rect x="108" y="64" width="104" height="16" rx="2" fill="url(#book-sheen)"/><path d="M109 65h102M109 78h102M116 67v10M204 67v10" stroke="#c6a36a" stroke-width="1"/><path d="M160 68l4 4-4 4-4-4z" fill="none" stroke="#dfc18a"/></g><g><rect x="151" y="41" width="88" height="18" rx="2" fill="#3d334a" stroke="#1b1712"/><rect x="152" y="42" width="86" height="16" rx="2" fill="url(#book-sheen)"/><path d="M153 43h84M153 56h84M160 45v10M230 45v10" stroke="#c6a36a" stroke-width="1"/><path d="M195 46l4 4-4 4-4-4z" fill="none" stroke="#dfc18a"/></g>
+              <path d="M97 30H158M105 23L97 30l8 7" fill="none" stroke="#e0bd7d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
             </svg>
           </a>
           <div class="card-body">
             <p class="genre">01 / TIMING &amp; PRECISION</p>
-            <h3>Tower Stack</h3>
-            <p>Time each drop, build your tower, and keep the stack alive.</p>
-            <div class="card-actions"><a class="play" href="stack-shift/">Play game <span aria-hidden="true">→</span></a><a class="scores" href="stack-shift/leaderboard.html">Leaderboard</a></div>
+            <h3>Book Stack</h3>
+            <p>Time each drop, stack leather-bound books, and see how high your pile can grow.</p>
+            <div class="card-actions"><a class="play" href="stack-shift/?v=book1">Play game <span aria-hidden="true">→</span></a><a class="scores" href="stack-shift/leaderboard.html?v=book1">Leaderboard</a></div>
           </div>
         </article>
         <article class="game-card cascade">

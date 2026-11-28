@@ -3,27 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tower Stack</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Book Stack</title>
+  <link rel="stylesheet" href="styles.css?v=book1">
 </head>
 <body>
   <main class="game-page">
     <header>
-      <h1>Tower Stack</h1>
-      <p>Press Space or tap the board to stack a sliding block. Overhangs get trimmed.</p>
+      <div class="eyebrow">THE READING ROOM · TIMING &amp; PRECISION</div>
+      <h1>Book <span>Stack</span></h1>
+      <p>Press Space or tap the board to stack a sliding book. Align each book carefully; overhangs get trimmed.</p>
     </header>
-    <nav aria-label="Tower Stack pages"><a class="page-link" href="../">← Arcade</a> <a class="page-link" href="leaderboard.html">Leaderboard</a></nav>
-    <section class="panel" aria-label="Tower Stack game">
+    <nav aria-label="Book Stack pages"><a class="page-link" href="../">← Arcade</a> <a class="page-link" href="leaderboard.html?v=book1">Leaderboard</a></nav>
+    <section class="panel" aria-label="Book Stack game">
       <dl class="stats">
-        <div><dt>Blocks</dt><dd id="score">0</dd></div>
+        <div><dt>Books</dt><dd id="score">0</dd></div>
         <div><dt>Perfect drops</dt><dd id="perfect">0</dd></div>
       </dl>
-      <canvas id="board" width="480" height="400" aria-label="Tower Stack playfield"></canvas>
+      <canvas id="board" width="480" height="400" aria-label="Book Stack playfield"></canvas>
       <button id="action" type="button">Start</button>
-      <p id="status" role="status">Ready to stack.</p>
+      <p id="status" role="status">Ready to stack your library.</p>
     </section>
   </main>
   <script src="scores.js"></script>
-  <script src="game.js"></script>
+  <script src="game.js?v=book1"></script>
 </body>
 </html>
