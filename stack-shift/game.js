@@ -81,7 +81,7 @@ function play() {
   else start();
 }
 
-// Three visible surfaces, all contained in the original collision rectangle.
+// Straight-on leather spine, with depth from bevels and curved lighting.
 // Narrow books lose ornamentation, not their playable width.
 function drawBlock(block, y) {
   const x = block.x, w = block.width, h = blockHeight - 2;
@@ -98,43 +98,14 @@ function drawBlock(block, y) {
     c.restore(); return;
   }
 
-  const depth = Math.min(12, w * .16);
-  const rise = Math.min(5, depth * .55);
-  const front = w - depth, right = x + front, bottom = y + h;
-  const top = y + rise, faceH = h - rise;
-  function polygon(points, fill) {
-    c.beginPath(); c.moveTo(...points[0]);
-    for (const point of points.slice(1)) c.lineTo(...point);
-    c.closePath(); c.fillStyle = fill; c.fill();
-  }
-
-  // Top cover: slanted plane, catching the warm reading-room light.
-  const cover = [[x, top], [x + depth, y], [x + w, y], [right, top]];
-  polygon(cover, block.color);
-  polygon(cover, '#f8d6a13b');
-  polygon([[x, top], [x + depth, y], [x + depth + .7, y + .7], [x + .7, top + .7]], '#e8c38b8c');
-  c.strokeStyle = '#d7b0789c'; c.lineWidth = .7;
-  c.beginPath(); c.moveTo(x + depth, y + .55); c.lineTo(x + w - .5, y + .55); c.stroke();
-
-  // Right-hand page block. Fine page lines run along the sloping fore-edge.
-  const side = [[right, top], [x + w, y], [x + w, bottom - rise], [right, bottom]];
-  polygon(side, block.color);
-  const pageTop = top + 3, pageBottom = bottom - 3;
-  const pages = [[right, pageTop], [x + w, pageTop - rise], [x + w, pageBottom - rise], [right, pageBottom]];
-  const paper = c.createLinearGradient(right, 0, x + w, 0);
-  paper.addColorStop(0, '#aa8a5b'); paper.addColorStop(.25, '#e5cea1'); paper.addColorStop(1, '#f3e1b8');
-  polygon(pages, paper);
-  c.lineWidth = .55;
-  for (let py = pageTop + 2; py < pageBottom - .5; py += 2.2) {
-    c.strokeStyle = '#80633f65';
-    c.beginPath(); c.moveTo(right, py); c.lineTo(x + w, py - rise); c.stroke();
-  }
-  polygon([[right, pageBottom], [x + w, pageBottom - rise], [x + w, bottom - rise], [right, bottom]], '#00000055');
-  c.strokeStyle = '#f4d39a65'; c.lineWidth = .7;
-  c.beginPath(); c.moveTo(right, top + 1); c.lineTo(x + w - .3, y + 1); c.stroke();
-
+  // Full-width spine: no perspective offset or exposed page edges.
+  const front = w, right = x + w, bottom = y + h;
+  const top = y, faceH = h;
+  // A dark binding silhouette keeps the playable edges easy to align.
+  c.fillStyle = block.color;
+  c.fillRect(x, y, w, h);
   // Convex spine: rounded ends, darker shoulders and a soft highlight.
-  const radius = Math.min(3.5, front * .14);
+  const radius = Math.min(2.7, front * .12);
   c.beginPath();
   c.moveTo(x + radius, top);
   c.quadraticCurveTo(x, top, x, top + radius);
@@ -148,11 +119,13 @@ function drawBlock(block, y) {
   c.fillStyle = block.color; c.fill();
   c.save(); c.clip();
   const leather = c.createLinearGradient(0, top, 0, bottom);
-  leather.addColorStop(0, '#00000065');
+  leather.addColorStop(0, '#00000078');
+  leather.addColorStop(.055, '#fff3d244');
   leather.addColorStop(.14, '#ffffff24');
-  leather.addColorStop(.32, '#f9d5a13f');
+  leather.addColorStop(.32, '#f9d5a150');
   leather.addColorStop(.57, '#ffffff06');
-  leather.addColorStop(.85, '#00000038');
+  leather.addColorStop(.79, '#00000030');
+  leather.addColorStop(.93, '#00000078');
   leather.addColorStop(1, '#00000088');
   c.fillStyle = leather; c.fillRect(x, top, front, faceH);
   const shoulders = c.createLinearGradient(x, 0, right, 0);
@@ -161,6 +134,10 @@ function drawBlock(block, y) {
   shoulders.addColorStop(.8, '#ffffff00');
   shoulders.addColorStop(1, '#00000060');
   c.fillStyle = shoulders; c.fillRect(x, top, front, faceH);
+  // Tiny straight bevels, not visible top or side planes.
+  c.fillStyle = '#f6dfb44f'; c.fillRect(x + 2, top + .5, front - 4, .8);
+  c.fillStyle = '#110b0966'; c.fillRect(x, top + 3, 1.2, faceH - 6);
+  c.fillStyle = '#110b0988'; c.fillRect(right - 1.2, top + 3, 1.2, faceH - 6);
   // Thin tooling lines wrap the curved spine.
   c.fillStyle = '#d6b578bb'; c.fillRect(x + 1, top + 2, front - 2, .8);
   c.fillStyle = '#af8b54'; c.fillRect(x + 1, bottom - 3, front - 2, .8);
