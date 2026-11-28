@@ -3,28 +3,63 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Book Stack</title>
-  <link rel="stylesheet" href="styles.css?v=book3">
+  <meta name="theme-color" content="#11161d">
+  <title>Book Stack | Evenwave Arcade</title>
+  <link rel="stylesheet" href="styles.css?v=book4">
 </head>
 <body>
   <main class="game-page">
-    <header>
-      <div class="eyebrow">THE READING ROOM · TIMING &amp; PRECISION</div>
+    <header class="game-header">
+      <a class="page-link nav-back" href="../">← All games</a>
       <h1>Book <span>Stack</span></h1>
-      <p>Press Space or tap the board to stack a sliding book. Align each book carefully; overhangs get trimmed.</p>
+      <a class="page-link nav-scores" href="leaderboard.html?v=book4">Leaderboard</a>
     </header>
-    <nav aria-label="Book Stack pages"><a class="page-link" href="../">← Arcade</a> <a class="page-link" href="leaderboard.html?v=book3">Leaderboard</a></nav>
-    <section class="panel" aria-label="Book Stack game">
-      <dl class="stats">
-        <div><dt>Books</dt><dd id="score">0</dd></div>
-        <div><dt>Perfect drops</dt><dd id="perfect">0</dd></div>
-      </dl>
-      <canvas id="board" width="480" height="400" aria-label="Book Stack playfield"></canvas>
-      <button id="action" type="button">Start</button>
-      <p id="status" role="status">Ready to stack your library.</p>
+    <div id="play-content" class="game-layout" inert>
+      <section class="game-column" aria-label="Book Stack game">
+        <dl class="stats">
+          <div><dt>Books stacked</dt><dd id="score">0</dd></div>
+          <div><dt>Perfect drops</dt><dd id="perfect">0</dd></div>
+          <div><dt>Personal best</dt><dd id="best">0</dd></div>
+        </dl>
+        <section class="panel play-panel">
+          <div class="panel-heading"><h2>Every book counts</h2><span>Timing &amp; precision</span></div>
+          <div class="board-frame"><canvas id="board" width="480" height="400" aria-label="Book Stack playfield"></canvas></div>
+          <button id="action" class="primary" type="button">Start</button>
+          <p id="status" role="status">Ready to stack your library.</p>
+        </section>
+      </section>
+      <aside class="side-column" aria-label="Game information">
+        <section class="panel rules">
+          <div class="panel-heading"><h2>✧ How to play</h2><span>Solo challenge</span></div>
+          <p>Press Space, tap the board, or use the drop button to place each sliding book on the stack.</p>
+          <p>Line up the edges as closely as possible. A perfect drop keeps the entire width; any overhang is trimmed away.</p>
+          <p>Books move faster as your stack grows. Miss the stack completely and the round ends.</p>
+          <div class="rule"><span>Each successful drop</span><strong>1 book</strong></div>
+          <div class="rule"><span>Perfect drops</span><strong>Keep full width</strong></div>
+        </section>
+        <section class="panel records">
+          <div class="panel-heading"><h2>Your records</h2><span>On this device</span></div>
+          <p>Chase your personal best. Your top five runs are saved in this browser, with perfect drops breaking ties.</p>
+          <a class="page-link" href="leaderboard.html?v=book4">View leaderboard →</a>
+        </section>
+      </aside>
+    </div>
+    <section id="start-menu" class="start-overlay" role="dialog" aria-modal="false" aria-labelledby="menu-title" aria-describedby="menu-description">
+      <div class="start-card">
+        <p class="eyebrow">Solo challenge · Timing &amp; precision</p>
+        <div class="menu-books" aria-hidden="true">
+          <i class="book-icon" style="--leather:#263c54;--length:64%"></i>
+          <i class="book-icon" style="--leather:#652e35;--length:82%"></i>
+          <i class="book-icon" style="--leather:#254c3b;--length:100%"></i>
+        </div>
+        <h2 id="menu-title">Ready to <span>stack?</span></h2>
+        <p id="menu-description">Build a tower of leather-bound books, one perfectly timed drop at a time. Keep the edges aligned and see how high your stack can grow.</p>
+        <button id="begin" class="primary" type="button">Start stacking →</button>
+        <p class="menu-note">Play as often as you like. Your best runs save locally on this device.</p>
+      </div>
     </section>
   </main>
   <script src="scores.js"></script>
-  <script src="game.js?v=book3"></script>
+  <script src="game.js?v=book4"></script>
 </body>
 </html>

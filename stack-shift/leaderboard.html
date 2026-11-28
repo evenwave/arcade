@@ -3,17 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11161d">
   <title>Leaderboard | Book Stack</title>
-  <link rel="stylesheet" href="styles.css?v=book3">
+  <link rel="stylesheet" href="styles.css?v=book4">
 </head>
 <body>
   <main class="leaderboard-page">
-    <header>
-      <h1>Leaderboard</h1>
-      <p>Top five Book Stack runs in this browser. Perfect drops break ties.</p>
+    <header class="game-header">
+      <a class="page-link nav-back" href="../">← All games</a>
+      <h1>Book <span>Stack</span></h1>
+      <a class="page-link nav-scores" href="index.html?v=book4">Back to game</a>
     </header>
-    <nav aria-label="Book Stack pages"><a class="page-link" href="../">← Arcade</a> <a class="page-link" href="index.html?v=book3">Back to game</a></nav>
     <section class="panel" aria-label="Local high scores">
+      <div class="panel-heading"><h2>✧ Leaderboard</h2><span>Top five · This device</span></div>
+      <p>Your best runs in this browser. Perfect drops break ties.</p>
       <table aria-label="Top Book Stack runs">
         <thead><tr><th scope="col">Rank</th><th scope="col">Books</th><th scope="col">Perfect</th></tr></thead>
         <tbody id="scores"></tbody>

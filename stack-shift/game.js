@@ -4,6 +4,15 @@ const action = document.querySelector('#action');
 const status = document.querySelector('#status');
 const scoreLabel = document.querySelector('#score');
 const perfectLabel = document.querySelector('#perfect');
+const bestLabel = document.querySelector('#best');
+const startMenu = document.querySelector('#start-menu');
+const playContent = document.querySelector('#play-content');
+const begin = document.querySelector('#begin');
+
+function refreshBest() {
+  bestLabel.textContent = (loadScores()[0]?.blocks || 0).toLocaleString();
+}
+refreshBest();
 const blockHeight = 30;
 const baseY = board.height - 32;
 // Original, procedurally drawn leather bindings; no imported artwork.
@@ -31,6 +40,9 @@ function spawnBlock() {
 }
 
 function start() {
+  startMenu.hidden = true;
+  playContent.inert = false;
+  if (document.activeElement === begin) action.focus({ preventScroll: true });
   stack = [baseBlock()];
   perfectDrops = 0;
   lastFrame = undefined;
@@ -48,6 +60,7 @@ function finish() {
   moving = undefined;
   const blocks = stack.length - 1;
   if (blocks > 0) saveScore({ blocks, perfect: perfectDrops });
+  refreshBest();
   action.textContent = 'Play again';
   status.textContent = 'Run over. ' + blocks + ' books stacked, ' + perfectDrops + ' perfect.';
   draw();
@@ -228,6 +241,7 @@ function animate(time) {
   requestAnimationFrame(animate);
 }
 
+begin.addEventListener('click', play);
 action.addEventListener('click', play);
 board.addEventListener('click', play);
 document.addEventListener('keydown', event => {
